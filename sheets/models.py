@@ -7,6 +7,8 @@ class Category(models.Model):
     name = models.CharField(max_length=100, verbose_name='分类名称')
     description = models.TextField(blank=True, verbose_name='分类描述')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories', verbose_name='所有者')
+    share_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, verbose_name='分享令牌')
+    is_shared = models.BooleanField(default=False, verbose_name='是否共享')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
 
     class Meta:
@@ -35,4 +37,3 @@ class GuitarSheet(models.Model):
 
     def __str__(self):
         return self.title
-

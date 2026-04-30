@@ -25,7 +25,15 @@
         {% for category in categories %}
         <a href="?category={{ category.id }}" class="category-tag {% if current_category == category.id|stringformat:'s' %}active{% endif %}">
             {{ category.name }}
+            {% if category.is_shared %}
+            <span class="share-badge">已共享</span>
+            {% endif %}
         </a>
+        {% if category.is_shared %}
+        <span style="font-size: 0.75rem;">
+            <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_category' category.share_token %}" readonly style="width: 200px; padding: 2px 5px; border: 1px solid #e2e8f0; border-radius: 3px; font-size: 0.7rem;" onclick="this.select()">
+        </span>
+        {% endif %}
         {% endfor %}
     </div>
     {% endif %}
@@ -50,7 +58,7 @@
                 <a href="{% url 'sheet_detail' sheet.id %}" class="btn btn-sm">查看</a>
                 <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-sm btn-outline">编辑</a>
                 {% if sheet.is_shared %}
-                <input type="text" value="{{ request.build_absolute_uri }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
+                <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
                 {% endif %}
                 <a href="{% url 'toggle_share' sheet.id %}" class="btn btn-sm {% if sheet.is_shared %}btn-warning{% else %}btn-success{% endif %}">
                     {% if sheet.is_shared %}取消共享{% else %}共享{% endif %}
@@ -65,5 +73,36 @@
         <p>还没有曲谱，点击"上传曲谱"开始添加吧！</p>
     </div>
     {% endif %}
+
+    <div class="category-management" style="margin-top: 3rem;">
+        <h2>分类管理</h2>
+        {% if categories %}
+        <div class="category-list" style="margin-top: 1rem;">
+            {% for category in categories %}
+            <div class="category-list-item" style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div>
+                    <strong>{{ category.name }}</strong>
+                    {% if category.is_shared %}
+                    <span class="share-badge">已共享</span>
+                    {% endif %}
+                    <p style="font-size: 0.875rem; color: #718096; margin-top: 0.25rem;">{{ category.sheets.count }} 首曲谱</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    {% if category.is_shared %}
+                    <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_category' category.share_token %}" readonly style="width: 280px; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.8rem;" onclick="this.select()">
+                    {% endif %}
+                    <a href="{% url 'toggle_category_share' category.id %}" class="btn btn-sm {% if category.is_shared %}btn-warning{% else %}btn-success{% endif %}">
+                        {% if category.is_shared %}取消共享{% else %}共享分类{% endif %}
+                    </a>
+                    <a href="{% url 'edit_category' category.id %}" class="btn btn-sm btn-outline">编辑</a>
+                    <a href="{% url 'delete_category' category.id %}" class="btn btn-sm btn-danger">删除</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: #718096;">还没有分类，点击"新建分类"开始创建吧！</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

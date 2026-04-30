@@ -168,9 +168,25 @@ def toggle_share(request, pk):
     return redirect('dashboard')
 
 
+@login_required
+def toggle_category_share(request, pk):
+    category = get_object_or_404(Category, pk=pk, owner=request.user)
+    category.is_shared = not category.is_shared
+    category.save()
+    status = '分类已共享' if category.is_shared else '分类已取消共享'
+    messages.success(request, status)
+    return redirect('dashboard')
+
+
 def shared_sheet(request, token):
     sheet = get_object_or_404(GuitarSheet, share_token=token, is_shared=True)
     return render(request, 'sheets/shared_sheet.html', {'sheet': sheet})
+
+
+def shared_category(request, token):
+    category = get_object_or_404(Category, share_token=token, is_shared=True)
+    sheets = category.sheets.all()
+    return render(request, 'sheets/shared_category.html', {'category': category, 'sheets': sheets})
 
 
 @login_required

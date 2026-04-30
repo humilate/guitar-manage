@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category.name }} - 共享曲谱分类</title>
+    <link rel="stylesheet" href="/static/sheets/css/style.css">
+</head>
+<body class="shared-view">
+    <nav class="navbar navbar-shared">
+        <div class="container">
+            <a href="/" class="logo">🎸 吉他曲谱</a>
+            <span class="shared-badge">共享分类：{{ category.name }}</span>
+        </div>
+    </nav>
+
+    <main class="container shared-container">
+        <h1>{{ category.name }}</h1>
+        {% if category.description %}
+        <p style="color: #718096; margin-bottom: 1rem;">{{ category.description }}</p>
+        {% endif %}
+        <p style="color: #718096; margin-bottom: 2rem;">共 {{ sheets|length }} 首曲谱，由 <strong>{{ category.owner.username }}</strong> 分享</p>
+
+        {% if sheets %}
+        <div class="sheet-grid">
+            {% for sheet in sheets %}
+            <div class="sheet-card">
+                <img src="{{ sheet.image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                <div class="sheet-info">
+                    <h3>{{ sheet.title }}</h3>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="text-align: center; color: #718096;">该分类下暂无曲谱</p>
+        {% endif %}
+    </main>
+</body>
+</html>

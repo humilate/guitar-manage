@@ -15,4 +15,6 @@ urlpatterns = [
     path('category/add/', views.add_category, name='add_category'),
     path('category/<int:pk>/edit/', views.edit_category, name='edit_category'),
     path('category/<int:pk>/delete/', views.delete_category, name='delete_category'),
+    path('category/<int:pk>/share/', views.toggle_category_share, name='toggle_category_share'),
+    path('category/shared/<uuid:token>/', views.shared_category, name='shared_category'),
 ]
