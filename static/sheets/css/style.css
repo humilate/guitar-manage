@@ -20,7 +20,6 @@ body {
     padding: 0 20px;
 }
 
-/* Navbar */
 .navbar {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -63,7 +62,6 @@ body {
     color: rgba(255,255,255,0.9);
 }
 
-/* Buttons */
 .btn {
     display: inline-block;
     padding: 0.5rem 1.25rem;
@@ -133,7 +131,6 @@ body {
     width: 100%;
 }
 
-/* Auth Pages */
 .auth-container {
     max-width: 400px;
     margin: 3rem auto;
@@ -193,7 +190,6 @@ body {
     text-decoration: underline;
 }
 
-/* Messages */
 .messages {
     margin-bottom: 1rem;
 }
@@ -216,7 +212,6 @@ body {
     border: 1px solid #fc8181;
 }
 
-/* Dashboard */
 .dashboard {
     padding: 2rem 0;
 }
@@ -237,7 +232,6 @@ body {
     gap: 1rem;
 }
 
-/* Search */
 .search-bar {
     margin-bottom: 1.5rem;
 }
@@ -260,7 +254,6 @@ body {
     border-color: #667eea;
 }
 
-/* Category Filters */
 .category-filters {
     display: flex;
     gap: 0.5rem;
@@ -285,7 +278,6 @@ body {
     border-color: #667eea;
 }
 
-/* Sheet Grid */
 .sheet-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -362,7 +354,6 @@ body {
     margin: 0.5rem 0;
 }
 
-/* Empty State */
 .empty-state {
     text-align: center;
     padding: 3rem;
@@ -371,7 +362,6 @@ body {
     color: #718096;
 }
 
-/* Form Container */
 .form-container {
     max-width: 600px;
     margin: 2rem auto;
@@ -432,7 +422,6 @@ body {
     margin-top: 1.5rem;
 }
 
-/* Confirm Delete */
 .confirm-container {
     max-width: 400px;
     margin: 3rem auto;
@@ -460,7 +449,6 @@ body {
     justify-content: center;
 }
 
-/* Sheet Detail */
 .sheet-detail {
     max-width: 900px;
     margin: 2rem auto;
@@ -513,7 +501,6 @@ body {
     padding-top: 1rem;
 }
 
-/* Shared View */
 .shared-view {
     background: #f5f5f5;
 }
@@ -549,7 +536,6 @@ body {
     border-top: 1px solid #e2e8f0;
 }
 
-/* Footer */
 .footer {
     background: #333;
     color: white;
@@ -558,33 +544,217 @@ body {
     margin-top: auto;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    .container {
+        padding: 0 15px;
+    }
+
+    .navbar {
+        padding: 0.75rem 0;
+    }
+
     .navbar .container {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
+    }
+
+    .logo {
+        font-size: 1.25rem;
     }
 
     .nav-links {
         flex-wrap: wrap;
         justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .nav-links a {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .auth-container {
+        margin: 1.5rem auto;
+    }
+
+    .auth-card {
+        padding: 1.5rem;
+    }
+
+    .auth-card h2 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .auth-form input,
+    .auth-form select,
+    .auth-form textarea {
+        padding: 0.65rem;
+        font-size: 16px;
+    }
+
+    .dashboard {
+        padding: 1rem 0;
     }
 
     .dashboard-header {
         flex-direction: column;
         gap: 1rem;
         align-items: flex-start;
+        margin-bottom: 1.5rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .dashboard-actions .btn {
+        text-align: center;
+    }
+
+    .search-form {
+        flex-direction: column;
+    }
+
+    .search-form .btn {
+        width: 100%;
+    }
+
+    .category-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .category-tag {
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .sheet-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .sheet-thumbnail {
+        height: 160px;
+    }
+
+    .sheet-info {
+        padding: 0.75rem;
+    }
+
+    .sheet-info h3 {
+        font-size: 1rem;
     }
 
     .sheet-actions {
+        padding: 0.75rem;
         flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sheet-actions .btn {
+        text-align: center;
+    }
+
+    .form-container {
+        margin: 1rem auto;
+    }
+
+    .form-card {
+        padding: 1.25rem;
+    }
+
+    .form-card h2 {
+        font-size: 1.25rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.65rem;
+        font-size: 16px;
     }
 
     .form-actions {
         flex-direction: column;
+        margin-top: 1rem;
+    }
+
+    .confirm-container {
+        margin: 2rem auto;
+    }
+
+    .confirm-card {
+        padding: 1.5rem;
+    }
+
+    .sheet-detail {
+        margin: 1rem auto;
+        padding: 1.25rem;
+    }
+
+    .sheet-detail-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .sheet-detail h1 {
+        font-size: 1.25rem;
+    }
+
+    .sheet-image-container {
+        margin: 1rem 0;
+    }
+
+    .shared-container {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        padding: 1.25rem;
+    }
+
+    .footer {
+        padding: 0.75rem 0;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 13px;
+    }
+
+    .logo {
+        font-size: 1.1rem;
+    }
+
+    .auth-card {
+        padding: 1rem;
+    }
+
+    .sheet-thumbnail {
+        height: 140px;
+    }
+
+    .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
     }
 }
