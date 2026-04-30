@@ -1,0 +1,39 @@
+{% extends 'sheets/base.html' %}
+
+{% block title %}{{ sheet.title }} - 吉他曲谱管理系统{% endblock %}
+
+{% block content %}
+<div class="sheet-detail">
+    <div class="sheet-detail-header">
+        <a href="{% url 'dashboard' %}" class="btn btn-outline">返回列表</a>
+        <div class="sheet-detail-actions">
+            <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-primary">编辑</a>
+            <a href="{% url 'toggle_share' sheet.id %}" class="btn {% if sheet.is_shared %}btn-warning{% else %}btn-success{% endif %}">
+                {% if sheet.is_shared %}取消共享{% else %}共享{% endif %}
+            </a>
+        </div>
+    </div>
+
+    <h1>{{ sheet.title }}</h1>
+
+    {% if sheet.category %}
+    <p class="sheet-category">分类：{{ sheet.category.name }}</p>
+    {% endif %}
+
+    {% if sheet.is_shared %}
+    <div class="share-info">
+        <p>分享链接：</p>
+        <input type="text" value="{{ request.build_absolute_uri }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
+    </div>
+    {% endif %}
+
+    <div class="sheet-image-container">
+        <img src="{{ sheet.image.url }}" alt="{{ sheet.title }}" class="sheet-full-image">
+    </div>
+
+    <div class="sheet-meta">
+        <p>创建时间：{{ sheet.created_at|date:"Y-m-d H:i" }}</p>
+        <p>更新时间：{{ sheet.updated_at|date:"Y-m-d H:i" }}</p>
+    </div>
+</div>
+{% endblock %}

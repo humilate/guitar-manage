@@ -1,0 +1,27 @@
+{% extends 'sheets/base.html' %}
+
+{% block title %}注册 - 吉他曲谱管理系统{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>注册账号</h2>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="error">{{ field.errors.0 }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-block">注册</button>
+        </form>
+        <p class="auth-link">
+            已有账号？<a href="{% url 'login' %}">立即登录</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'sheets/base.html' %}
+
+{% block title %}我的曲谱 - 吉他曲谱管理系统{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>我的曲谱</h1>
+        <div class="dashboard-actions">
+            <a href="{% url 'add_category' %}" class="btn btn-outline">新建分类</a>
+            <a href="{% url 'add_sheet' %}" class="btn btn-primary">上传曲谱</a>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <form method="get" class="search-form">
+            <input type="text" name="search" placeholder="搜索曲谱..." value="{{ search_query|default:'' }}">
+            <button type="submit" class="btn btn-primary">搜索</button>
+        </form>
+    </div>
+
+    {% if categories %}
+    <div class="category-filters">
+        <a href="{% url 'dashboard' %}" class="category-tag {% if not current_category %}active{% endif %}">全部</a>
+        {% for category in categories %}
+        <a href="?category={{ category.id }}" class="category-tag {% if current_category == category.id|stringformat:'s' %}active{% endif %}">
+            {{ category.name }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if sheets %}
+    <div class="sheet-grid">
+        {% for sheet in sheets %}
+        <div class="sheet-card">
+            <a href="{% url 'sheet_detail' sheet.id %}">
+                <img src="{{ sheet.image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+            </a>
+            <div class="sheet-info">
+                <h3><a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a></h3>
+                {% if sheet.category %}
+                <span class="category-badge">{{ sheet.category.name }}</span>
+                {% endif %}
+                {% if sheet.is_shared %}
+                <span class="share-badge">已共享</span>
+                {% endif %}
+            </div>
+            <div class="sheet-actions">
+                <a href="{% url 'sheet_detail' sheet.id %}" class="btn btn-sm">查看</a>
+                <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-sm btn-outline">编辑</a>
+                {% if sheet.is_shared %}
+                <input type="text" value="{{ request.build_absolute_uri }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
+                {% endif %}
+                <a href="{% url 'toggle_share' sheet.id %}" class="btn btn-sm {% if sheet.is_shared %}btn-warning{% else %}btn-success{% endif %}">
+                    {% if sheet.is_shared %}取消共享{% else %}共享{% endif %}
+                </a>
+                <a href="{% url 'delete_sheet' sheet.id %}" class="btn btn-sm btn-danger">删除</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>还没有曲谱，点击"上传曲谱"开始添加吧！</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

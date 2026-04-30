@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ sheet.title }} - 共享曲谱</title>
+    <link rel="stylesheet" href="/static/sheets/css/style.css">
+</head>
+<body class="shared-view">
+    <nav class="navbar navbar-shared">
+        <div class="container">
+            <a href="/" class="logo">🎸 吉他曲谱</a>
+            <span class="shared-badge">共享曲谱</span>
+        </div>
+    </nav>
+
+    <main class="container shared-container">
+        <h1>{{ sheet.title }}</h1>
+        {% if sheet.category %}
+        <p class="sheet-category">分类：{{ sheet.category.name }}</p>
+        {% endif %}
+
+        <div class="sheet-image-container">
+            <img src="{{ sheet.image.url }}" alt="{{ sheet.title }}" class="sheet-full-image">
+        </div>
+
+        <p class="shared-footer">此曲谱由 <strong>{{ sheet.owner.username }}</strong> 分享</p>
+    </main>
+</body>
+</html>

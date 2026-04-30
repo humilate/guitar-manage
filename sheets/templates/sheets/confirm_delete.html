@@ -1,0 +1,20 @@
+{% extends 'sheets/base.html' %}
+
+{% block title %}删除确认 - 吉他曲谱管理系统{% endblock %}
+
+{% block content %}
+<div class="confirm-container">
+    <div class="confirm-card">
+        <h2>确认删除</h2>
+        <p>确定要删除这个{{ type }}吗？此操作不可撤销。</p>
+        <p class="object-name">《{{ object.title|default:object.name }}》</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">确认删除</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
