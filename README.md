@@ -1,6 +1,6 @@
 # 吉他曲谱管理系统
 
-一个基于 Django 的吉他曲谱管理网站，支持曲谱上传、分类管理、搜索筛选和曲谱共享功能。
+一个基于 Django 的吉他曲谱管理网站，支持曲谱上传、分类管理、搜索筛选、曲谱共享和分类共享功能。
 
 ## 功能特性
 
@@ -9,7 +9,9 @@
 - **分类管理**：创建、编辑、删除曲谱分类
 - **搜索功能**：按曲谱名称或分类名称搜索
 - **曲谱共享**：一键生成分享链接，无需登录即可查看
+- **分类共享**：共享整个分类，其他用户可一次性查看该分类下的所有曲谱
 - **响应式设计**：适配桌面和移动设备
+- **后台管理**：Django Admin 管理用户和内容
 
 ## 技术栈
 
@@ -45,8 +47,10 @@ guitar-manage/
 │   │   ├── add_category        # 创建分类
 │   │   ├── edit_category       # 编辑分类
 │   │   ├── delete_category     # 删除分类
-│   │   ├── toggle_share        # 切换共享状态
+│   │   ├── toggle_share        # 切换曲谱共享状态
 │   │   ├── shared_sheet        # 查看共享曲谱（无需登录）
+│   │   ├── toggle_category_share # 切换分类共享状态
+│   │   ├── shared_category     # 查看共享分类（无需登录）
 │   │   └── sheet_detail        # 曲谱详情页
 │   ├── forms.py                # 表单定义
 │   │   ├── UserRegisterForm    # 用户注册表单
@@ -54,6 +58,9 @@ guitar-manage/
 │   │   └── CategoryForm        # 分类创建/编辑表单
 │   ├── urls.py                 # 应用 URL 路由配置
 │   ├── admin.py                # Django 后台管理配置
+│   │   ├── CustomUserAdmin     # 自定义用户管理
+│   │   ├── CategoryAdmin       # 分类管理配置
+│   │   └── GuitarSheetAdmin    # 曲谱管理配置
 │   ├── apps.py                 # 应用配置
 │   ├── tests.py                # 测试文件
 │   ├── migrations/             # 数据库迁移文件
@@ -164,6 +171,8 @@ python manage.py runserver
 | `/sheets/category/add/` | 创建分类 | 是 |
 | `/sheets/category/<id>/edit/` | 编辑分类 | 是 |
 | `/sheets/category/<id>/delete/` | 删除分类 | 是 |
+| `/sheets/category/<id>/share/` | 切换分类共享状态 | 是 |
+| `/sheets/category/shared/<token>/` | 查看共享分类 | 否 |
 
 ## 数据模型
 
@@ -173,6 +182,8 @@ python manage.py runserver
 | name | CharField | 分类名称 |
 | description | TextField | 分类描述 |
 | owner | ForeignKey | 所有者（用户） |
+| share_token | UUIDField | 分享令牌（唯一） |
+| is_shared | BooleanField | 是否共享 |
 | created_at | DateTimeField | 创建时间 |
 
 ### GuitarSheet（吉他曲谱）
