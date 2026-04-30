@@ -7,7 +7,11 @@
     <div class="confirm-card">
         <h2>确认删除</h2>
         <p>确定要删除这个{{ type }}吗？此操作不可撤销。</p>
-        <p class="object-name">《{{ object.title|default:object.name }}》</p>
+        {% if type == '曲谱' %}
+        <p class="object-name">《{{ object.title }}》</p>
+        {% else %}
+        <p class="object-name">《{{ object.name }}》</p>
+        {% endif %}
         <form method="post">
             {% csrf_token %}
             <div class="form-actions">
