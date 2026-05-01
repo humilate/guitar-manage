@@ -3,6 +3,8 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from .models import Category, GuitarSheet, SheetImage
 
+admin.site.unregister(User)
+
 
 class SheetImageInline(admin.TabularInline):
     model = SheetImage
