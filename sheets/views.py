@@ -65,7 +65,7 @@ def user_can_access_category(user, category):
 
 @login_required
 def dashboard(request):
-    categories = Category.objects.filter(owner=request.user)
+    categories = list(Category.objects.filter(owner=request.user))
     sheets = GuitarSheet.objects.filter(owner=request.user)
 
     category_id = request.GET.get('category')
@@ -79,7 +79,7 @@ def dashboard(request):
             Q(category__name__icontains=search_query)
         )
 
-    paginator = Paginator(sheets, 12)
+    paginator = Paginator(sheets.select_related('category'), 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -99,7 +99,7 @@ def category_detail(request, pk):
     if not user_can_access_category(request.user, category):
         raise Http404
     
-    is_member = request.user in category.members.all()
+    is_member = request.user.id in list(category.members.values_list('id', flat=True))
     is_owner = category.owner == request.user
     
     sheets = GuitarSheet.objects.filter(category=category)
@@ -108,7 +108,7 @@ def category_detail(request, pk):
     if search_query:
         sheets = sheets.filter(title__icontains=search_query)
 
-    paginator = Paginator(sheets, 12)
+    paginator = Paginator(sheets.select_related('owner', 'category'), 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
