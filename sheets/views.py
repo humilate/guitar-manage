@@ -1,5 +1,6 @@
 import os
 import zipfile
+import logging
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
@@ -10,6 +11,8 @@ from django.db import transaction
 from django.db.models import Q
 from .models import GuitarSheet, Category, SheetImage
 from .forms import UserRegisterForm, GuitarSheetForm, CategoryForm
+
+logger = logging.getLogger(__name__)
 
 
 def register_view(request):
@@ -154,37 +157,50 @@ def upload_folder(request):
         uploaded_count = 0
         error_count = 0
         sheet_count = 0
+        error_details = []
 
         with transaction.atomic():
             with zipfile.ZipFile(zip_file, 'r') as zf:
-                for info in zf.infolist():
-                    if info.is_dir():
+                file_list = zf.namelist()
+                logger.info(f'ZIP 文件包含 {len(file_list)} 个文件')
+                
+                for idx, info in enumerate(file_list):
+                    if info.endswith('/'):
                         continue
 
-                    original_filename = info.filename
+                    original_filename = info
                     rel_path = original_filename.replace('\\', '/')
                     rel_path = decode_zip_filename(rel_path)
                     
                     parts = [p for p in rel_path.split('/') if p]
+                    
+                    logger.info(f'文件 {idx}: {original_filename} -> {rel_path} -> {len(parts)} 层')
 
                     if len(parts) < 3:
+                        logger.warning(f'跳过: 层级不足 3 层')
                         continue
 
                     cat_name = parts[0]
                     sheet_name = parts[1]
                     img_filename = parts[2]
+                    
                     if not is_image_file(img_filename):
+                        logger.warning(f'跳过: 不是图片文件 {img_filename}')
                         continue
 
                     try:
                         img_data = zf.read(original_filename)
 
-                        category, _ = Category.objects.get_or_create(
+                        category, created_cat = Category.objects.get_or_create(
                             name=cat_name,
                             defaults={'owner': request.user, 'description': f'自动创建：{cat_name}'}
                         )
+                        
+                        if created_cat:
+                            logger.info(f'创建分类: {cat_name}')
 
                         if category.owner != request.user:
+                            logger.warning(f'跳过: 分类不属于当前用户')
                             continue
 
                         sheet, created = GuitarSheet.objects.get_or_create(
@@ -194,19 +210,28 @@ def upload_folder(request):
                         )
                         if created:
                             sheet_count += 1
+                            logger.info(f'创建曲谱: {sheet_name}')
 
                         from django.core.files.base import ContentFile
                         existing_count = SheetImage.objects.filter(sheet=sheet).count()
                         sheet_image = SheetImage(sheet=sheet, page_number=existing_count)
                         sheet_image.image.save(img_filename, ContentFile(img_data), save=True)
                         uploaded_count += 1
-                    except Exception:
+                        logger.info(f'保存图片: {img_filename}')
+                    except Exception as e:
                         error_count += 1
+                        error_details.append(f'{img_filename}: {str(e)}')
+                        logger.error(f'上传失败: {e}')
 
+        logger.info(f'上传完成: {uploaded_count} 张图片, {sheet_count} 个曲谱, {error_count} 个错误')
+        
         if uploaded_count > 0:
             messages.success(request, f'成功上传 {uploaded_count} 张图片，创建 {sheet_count} 个曲谱')
         if error_count > 0:
             messages.warning(request, f'{error_count} 张图片上传失败')
+        if error_details:
+            for detail in error_details[:3]:
+                messages.error(request, detail)
         return redirect('dashboard')
 
     return render(request, 'sheets/upload_folder.html', {'title': '文件夹上传'})
