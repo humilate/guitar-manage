@@ -4,6 +4,7 @@ import logging
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -341,7 +342,9 @@ def delete_image(request, pk):
 
 
 def shared_sheet(request, token):
-    sheet = get_object_or_404(GuitarSheet, share_token=token, is_shared=True)
+    sheet = get_object_or_404(GuitarSheet, share_token=token)
+    if not sheet.is_shared and (not sheet.category or not sheet.category.is_shared):
+        raise Http404
     images = sheet.images.all()
     return render(request, 'sheets/shared_sheet.html', {'sheet': sheet, 'images': images})
 
