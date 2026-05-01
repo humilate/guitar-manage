@@ -133,6 +133,16 @@ def is_image_file(filename):
     return os.path.splitext(filename)[1].lower() in IMAGE_EXTENSIONS
 
 
+def decode_zip_filename(filename):
+    encodings = ['utf-8', 'gbk', 'gb2312', 'big5']
+    for encoding in encodings:
+        try:
+            return filename.encode('cp437').decode(encoding)
+        except:
+            continue
+    return filename
+
+
 @login_required
 def upload_folder(request):
     if request.method == 'POST':
@@ -143,6 +153,7 @@ def upload_folder(request):
 
         uploaded_count = 0
         error_count = 0
+        sheet_count = 0
 
         with transaction.atomic():
             with zipfile.ZipFile(zip_file, 'r') as zf:
@@ -150,20 +161,23 @@ def upload_folder(request):
                     if info.is_dir():
                         continue
 
-                    rel_path = info.filename.replace('\\', '/')
+                    original_filename = info.filename
+                    rel_path = original_filename.replace('\\', '/')
+                    rel_path = decode_zip_filename(rel_path)
+                    
                     parts = [p for p in rel_path.split('/') if p]
 
-                    if len(parts) < 2:
+                    if len(parts) < 3:
                         continue
 
                     cat_name = parts[0]
                     sheet_name = parts[1]
-                    if not is_image_file(info.filename):
+                    img_filename = parts[2]
+                    if not is_image_file(img_filename):
                         continue
 
                     try:
-                        img_data = zf.read(info.filename)
-                        img_name = os.path.basename(info.filename)
+                        img_data = zf.read(original_filename)
 
                         category, _ = Category.objects.get_or_create(
                             name=cat_name,
@@ -173,22 +187,24 @@ def upload_folder(request):
                         if category.owner != request.user:
                             continue
 
-                        sheet, _ = GuitarSheet.objects.get_or_create(
+                        sheet, created = GuitarSheet.objects.get_or_create(
                             title=sheet_name,
                             category=category,
                             owner=request.user
                         )
+                        if created:
+                            sheet_count += 1
 
                         from django.core.files.base import ContentFile
                         existing_count = SheetImage.objects.filter(sheet=sheet).count()
                         sheet_image = SheetImage(sheet=sheet, page_number=existing_count)
-                        sheet_image.image.save(img_name, ContentFile(img_data), save=True)
+                        sheet_image.image.save(img_filename, ContentFile(img_data), save=True)
                         uploaded_count += 1
                     except Exception:
                         error_count += 1
 
         if uploaded_count > 0:
-            messages.success(request, f'成功上传 {uploaded_count} 张图片')
+            messages.success(request, f'成功上传 {uploaded_count} 张图片，创建 {sheet_count} 个曲谱')
         if error_count > 0:
             messages.warning(request, f'{error_count} 张图片上传失败')
         return redirect('dashboard')
