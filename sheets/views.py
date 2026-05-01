@@ -161,19 +161,26 @@ def upload_folder(request):
 
         try:
             with zipfile.ZipFile(zip_file, 'r') as zf:
-                file_list = zf.namelist()
-                logger.info(f'ZIP 文件包含 {len(file_list)} 个文件')
+                info_list = zf.infolist()
+                logger.info(f'ZIP 文件包含 {len(info_list)} 个文件')
                 
-                for idx, filename in enumerate(file_list):
-                    if filename.endswith('/'):
+                for idx, info in enumerate(info_list):
+                    if info.is_dir():
                         continue
 
-                    rel_path = filename.replace('\\', '/')
-                    rel_path = decode_zip_filename(rel_path)
+                    original_bytes = info.filename.encode('cp437') if isinstance(info.filename, str) else info.filename
+                    
+                    try:
+                        rel_path = original_bytes.decode('utf-8')
+                    except:
+                        try:
+                            rel_path = original_bytes.decode('gbk')
+                        except:
+                            rel_path = info.filename
                     
                     parts = [p for p in rel_path.split('/') if p]
                     
-                    logger.info(f'文件 {idx}: {filename} -> {rel_path} -> {len(parts)} 层')
+                    logger.info(f'文件 {idx}: {info.filename} -> {rel_path} -> {len(parts)} 层')
 
                     if len(parts) < 3:
                         logger.warning(f'跳过: 层级不足 3 层: {rel_path}')
@@ -188,7 +195,7 @@ def upload_folder(request):
                         continue
 
                     try:
-                        img_data = zf.read(filename)
+                        img_data = zf.read(info)
 
                         category, created_cat = Category.objects.get_or_create(
                             name=cat_name,
