@@ -37,47 +37,67 @@
             <a href="{% url 'category_detail' category.id %}" class="btn btn-outline">清除搜索</a>
             {% endif %}
         </form>
-        {% if search_query %}
-        <p style="color: #718096; font-size: 0.875rem; margin-top: 0.5rem;">在 "{{ category.name }}" 中搜索："{{ search_query }}"</p>
-        {% endif %}
     </div>
 
     {% if sheets %}
-    <div class="sheet-grid">
-        {% for sheet in sheets %}
-        <div class="sheet-card">
-            <a href="{% url 'sheet_detail' sheet.id %}">
-                {% if sheet.get_first_image %}
-                <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
-                {% else %}
-                <div class="sheet-thumbnail sheet-thumbnail-empty">
-                    <span>暂无图片</span>
-                </div>
-                {% endif %}
-            </a>
-            <div class="sheet-info">
-                <h3><a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a></h3>
-                {% if sheet.is_shared %}
-                <span class="share-badge">已共享</span>
-                {% endif %}
-                {% if sheet.images.count > 1 %}
-                <span class="page-count-badge">{{ sheet.images.count }} 页</span>
-                {% endif %}
-            </div>
-            <div class="sheet-actions">
-                <a href="{% url 'sheet_detail' sheet.id %}" class="btn btn-sm">查看</a>
-                <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-sm btn-outline">编辑</a>
-                {% if sheet.is_shared %}
-                <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
-                {% endif %}
-                <a href="{% url 'toggle_share' sheet.id %}" class="btn btn-sm {% if sheet.is_shared %}btn-warning{% else %}btn-success{% endif %}">
-                    {% if sheet.is_shared %}取消共享{% else %}共享{% endif %}
-                </a>
-                <a href="{% url 'delete_sheet' sheet.id %}" class="btn btn-sm btn-danger">删除</a>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="batch-actions" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-sm btn-outline" id="selectAllPageBtn">全选本页</button>
+        <button type="button" class="btn btn-sm btn-outline" id="selectAllPagesBtn">选择全部 {{ page_obj.paginator.count }} 首</button>
+        <span style="color: #718096; font-size: 0.85rem;">已选 <strong id="selectedCount">0</strong> 首</span>
+        <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <input type="hidden" name="mode" id="batchMode" value="selected">
+            <select name="category_id" id="batchCategory" style="display: none; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.85rem;">
+                <option value="">选择目标分类</option>
+                <option value="none">-- 无分类 --</option>
+                {% for cat in request.user.categories.all %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="btn btn-sm btn-outline" id="batchCategoryBtn" style="display: none;">修改分类</button>
+            <button type="button" class="btn btn-sm btn-danger" id="batchDeleteBtn" style="display: none;">批量删除</button>
+        </form>
     </div>
+
+    <form method="post" id="actionForm">
+        {% csrf_token %}
+        <div class="sheet-grid">
+            {% for sheet in sheets %}
+            <div class="sheet-card" style="position: relative;">
+                <input type="checkbox" name="sheet_ids" value="{{ sheet.id }}" class="sheet-checkbox" style="position: absolute; top: 10px; left: 10px; z-index: 2; width: 20px; height: 20px; cursor: pointer;">
+                <a href="{% url 'sheet_detail' sheet.id %}">
+                    {% if sheet.get_first_image %}
+                    <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                    {% else %}
+                    <div class="sheet-thumbnail sheet-thumbnail-empty">
+                        <span>暂无图片</span>
+                    </div>
+                    {% endif %}
+                </a>
+                <div class="sheet-info">
+                    <h3><a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a></h3>
+                    {% if sheet.is_shared %}
+                    <span class="share-badge">已共享</span>
+                    {% endif %}
+                    {% if sheet.images.count > 1 %}
+                    <span class="page-count-badge">{{ sheet.images.count }} 页</span>
+                    {% endif %}
+                </div>
+                <div class="sheet-actions">
+                    <a href="{% url 'sheet_detail' sheet.id %}" class="btn btn-sm">查看</a>
+                    <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-sm btn-outline">编辑</a>
+                    {% if sheet.is_shared %}
+                    <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
+                    {% endif %}
+                    <a href="{% url 'toggle_share' sheet.id %}" class="btn btn-sm {% if sheet.is_shared %}btn-warning{% else %}btn-success{% endif %}">
+                        {% if sheet.is_shared %}取消共享{% else %}共享{% endif %}
+                    </a>
+                    <a href="{% url 'delete_sheet' sheet.id %}" class="btn btn-sm btn-danger">删除</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </form>
 
     {% if page_obj.has_other_pages %}
     <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem;">
@@ -85,22 +105,163 @@
         <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">&laquo; 首页</a>
         <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">&lsaquo; 上一页</a>
         {% endif %}
-
-        <span style="color: #718096; font-size: 0.9rem;">
-            第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页
-        </span>
-
+        <span style="color: #718096; font-size: 0.9rem;">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页</span>
         {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">下一页 &rsaquo;</a>
         <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">末页 &raquo;</a>
         {% endif %}
     </div>
     {% endif %}
-
     {% else %}
     <div class="empty-state">
         <p>该分类下还没有曲谱，点击"上传曲谱"开始添加吧！</p>
     </div>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.sheet-checkbox');
+    const selectedCount = document.getElementById('selectedCount');
+    const batchCategory = document.getElementById('batchCategory');
+    const batchCategoryBtn = document.getElementById('batchCategoryBtn');
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    const selectAllPageBtn = document.getElementById('selectAllPageBtn');
+    const selectAllPagesBtn = document.getElementById('selectAllPagesBtn');
+    const batchMode = document.getElementById('batchMode');
+    const categoryId = {{ category.id }};
+
+    let allPagesMode = false;
+
+    function updateButtons() {
+        const checked = document.querySelectorAll('.sheet-checkbox:checked');
+        selectedCount.textContent = allPagesMode ? '{{ page_obj.paginator.count }}' : checked.length;
+        const hasSelection = allPagesMode || checked.length > 0;
+        batchCategory.style.display = hasSelection ? 'inline-block' : 'none';
+        batchCategoryBtn.style.display = hasSelection ? 'inline-block' : 'none';
+        batchDeleteBtn.style.display = hasSelection ? 'inline-block' : 'none';
+    }
+
+    checkboxes.forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            allPagesMode = false;
+            updateButtons();
+        });
+    });
+
+    if (selectAllPageBtn) {
+        selectAllPageBtn.addEventListener('click', function() {
+            allPagesMode = false;
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(function(cb) { cb.checked = !allChecked; });
+            updateButtons();
+        });
+    }
+
+    if (selectAllPagesBtn) {
+        selectAllPagesBtn.addEventListener('click', function() {
+            allPagesMode = !allPagesMode;
+            if (allPagesMode) {
+                checkboxes.forEach(function(cb) { cb.checked = true; });
+                selectAllPagesBtn.textContent = '取消全选';
+                selectAllPagesBtn.classList.add('btn-warning');
+            } else {
+                checkboxes.forEach(function(cb) { cb.checked = false; });
+                selectAllPagesBtn.textContent = '选择全部 {{ page_obj.paginator.count }} 首';
+                selectAllPagesBtn.classList.remove('btn-warning');
+            }
+            updateButtons();
+        });
+    }
+
+    if (batchCategoryBtn) {
+        batchCategoryBtn.addEventListener('click', function() {
+            if (!allPagesMode) {
+                const checked = document.querySelectorAll('.sheet-checkbox:checked');
+                if (checked.length === 0) return;
+            }
+            const action = batchCategory.value;
+            if (action === '') {
+                alert('请选择目标分类');
+                return;
+            }
+            const count = allPagesMode ? '{{ page_obj.paginator.count }}' : document.querySelectorAll('.sheet-checkbox:checked').length;
+            if (!confirm('确定修改 ' + count + ' 首曲谱的分类吗？')) return;
+
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/sheets/category/' + categoryId + '/batch/update/';
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = 'csrfmiddlewaretoken';
+            csrf.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            form.appendChild(csrf);
+            
+            const modeInput = document.createElement('input');
+            modeInput.type = 'hidden';
+            modeInput.name = 'mode';
+            modeInput.value = allPagesMode ? 'all' : 'selected';
+            form.appendChild(modeInput);
+            
+            const catInput = document.createElement('input');
+            catInput.type = 'hidden';
+            catInput.name = 'category_id';
+            catInput.value = action;
+            form.appendChild(catInput);
+            
+            if (!allPagesMode) {
+                document.querySelectorAll('.sheet-checkbox:checked').forEach(function(cb) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'sheet_ids';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+
+    if (batchDeleteBtn) {
+        batchDeleteBtn.addEventListener('click', function() {
+            if (!allPagesMode) {
+                const checked = document.querySelectorAll('.sheet-checkbox:checked');
+                if (checked.length === 0) return;
+            }
+            const count = allPagesMode ? '{{ page_obj.paginator.count }}' : document.querySelectorAll('.sheet-checkbox:checked').length;
+            if (!confirm('确定删除 ' + count + ' 首曲谱吗？此操作不可恢复！')) return;
+
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/sheets/category/' + categoryId + '/batch/delete/';
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = 'csrfmiddlewaretoken';
+            csrf.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            form.appendChild(csrf);
+            
+            const modeInput = document.createElement('input');
+            modeInput.type = 'hidden';
+            modeInput.name = 'mode';
+            modeInput.value = allPagesMode ? 'all' : 'selected';
+            form.appendChild(modeInput);
+            
+            if (!allPagesMode) {
+                document.querySelectorAll('.sheet-checkbox:checked').forEach(function(cb) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'sheet_ids';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+});
+</script>
 {% endblock %}

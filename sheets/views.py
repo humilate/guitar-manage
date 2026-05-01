@@ -423,3 +423,64 @@ def batch_delete(request):
             messages.warning(request, '没有曲谱被删除')
         
         return redirect('dashboard')
+
+
+@login_required
+def category_batch_update(request, pk):
+    category = get_object_or_404(Category, pk=pk, owner=request.user)
+    
+    if request.method == 'POST':
+        target_category_id = request.POST.get('category_id')
+        mode = request.POST.get('mode', 'selected')
+        
+        target_category = None
+        if target_category_id and target_category_id != 'none':
+            target_category = get_object_or_404(Category, pk=target_category_id, owner=request.user)
+        
+        if mode == 'all':
+            sheets = GuitarSheet.objects.filter(owner=request.user, category=category)
+            updated = sheets.update(category=target_category)
+        else:
+            sheet_ids = request.POST.getlist('sheet_ids')
+            if not sheet_ids:
+                messages.warning(request, '请选择要修改的曲谱')
+                return redirect('category_detail', pk=pk)
+            
+            updated = 0
+            for sheet in GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user):
+                sheet.category = target_category
+                sheet.save()
+                updated += 1
+        
+        if updated > 0:
+            messages.success(request, f'成功修改 {updated} 首曲谱的分类')
+        else:
+            messages.warning(request, '没有曲谱被修改')
+        
+        return redirect('category_detail', pk=pk)
+
+
+@login_required
+def category_batch_delete(request, pk):
+    category = get_object_or_404(Category, pk=pk, owner=request.user)
+    
+    if request.method == 'POST':
+        mode = request.POST.get('mode', 'selected')
+        
+        if mode == 'all':
+            sheets = GuitarSheet.objects.filter(owner=request.user, category=category)
+            deleted, _ = sheets.delete()
+        else:
+            sheet_ids = request.POST.getlist('sheet_ids')
+            if not sheet_ids:
+                messages.warning(request, '请选择要删除的曲谱')
+                return redirect('category_detail', pk=pk)
+            
+            deleted, _ = GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user).delete()
+        
+        if deleted > 0:
+            messages.success(request, f'成功删除 {deleted} 首曲谱')
+        else:
+            messages.warning(request, '没有曲谱被删除')
+        
+        return redirect('category_detail', pk=pk)
