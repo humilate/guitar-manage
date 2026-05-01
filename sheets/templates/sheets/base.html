@@ -16,6 +16,7 @@
             <div class="nav-links">
                 <a href="{% url 'dashboard' %}">我的曲谱</a>
                 <a href="{% url 'add_sheet' %}">上传曲谱</a>
+                <a href="{% url 'upload_folder' %}">批量上传</a>
                 <span class="username">{{ user.username }}</span>
                 <a href="{% url 'logout' %}" class="btn btn-outline">退出登录</a>
             </div>
