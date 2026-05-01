@@ -35,8 +35,15 @@
     {% endif %}
 
     {% if is_member and not is_owner %}
-    <div class="alert" style="background: #fffbeb; padding: 0.75rem 1rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid #f59e0b;">
-        <p style="color: #92400e; margin: 0; font-size: 0.875rem;">您是该分类的成员，只能管理自己上传的曲谱。</p>
+    <div class="alert" style="background: #ebf8ff; padding: 0.75rem 1rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid #4299e1;">
+        <p style="color: #2c5282; margin: 0; font-size: 0.875rem;">您是该分类的成员。</p>
+    </div>
+    {% endif %}
+
+    {% if is_shared %}
+    <div style="background: #f7fafc; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem;">
+        <p style="font-size: 0.875rem; color: #718096; margin-bottom: 0.5rem;">分享链接：</p>
+        <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_category' category.share_token %}" readonly style="width: 100%; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.8rem;" onclick="this.select()">
     </div>
     {% endif %}
 

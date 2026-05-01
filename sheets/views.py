@@ -65,7 +65,10 @@ def user_can_access_category(user, category):
 
 @login_required
 def dashboard(request):
-    categories = list(Category.objects.filter(owner=request.user))
+    owned_categories = list(Category.objects.filter(owner=request.user))
+    member_categories = list(Category.objects.filter(members=request.user).exclude(owner=request.user))
+    categories = owned_categories + member_categories
+    
     sheets = GuitarSheet.objects.filter(owner=request.user)
 
     category_id = request.GET.get('category')

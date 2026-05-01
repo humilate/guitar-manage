@@ -43,17 +43,22 @@
     <div class="category-filters">
         <a href="{% url 'dashboard' %}" class="category-tag {% if not current_category %}active{% endif %}">全部</a>
         {% for category in categories %}
-        <a href="{% url 'category_detail' category.id %}" class="category-tag {% if current_category == category.id|stringformat:'s' %}active{% endif %}">
-            {{ category.name }}
+        <div style="display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap;">
+            <a href="{% url 'category_detail' category.id %}" class="category-tag {% if current_category == category.id|stringformat:'s' %}active{% endif %}">
+                {{ category.name }}
+                {% if category.owner != request.user %}
+                <span style="font-size: 0.7rem; color: #4299e1;">(成员)</span>
+                {% endif %}
+                {% if category.is_shared %}
+                <span class="share-badge">已共享</span>
+                {% endif %}
+            </a>
             {% if category.is_shared %}
-            <span class="share-badge">已共享</span>
+            <span style="font-size: 0.75rem;">
+                <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_category' category.share_token %}" readonly style="width: 200px; padding: 2px 5px; border: 1px solid #e2e8f0; border-radius: 3px; font-size: 0.7rem;" onclick="this.select()">
+            </span>
             {% endif %}
-        </a>
-        {% if category.is_shared %}
-        <span style="font-size: 0.75rem;">
-            <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_category' category.share_token %}" readonly style="width: 200px; padding: 2px 5px; border: 1px solid #e2e8f0; border-radius: 3px; font-size: 0.7rem;" onclick="this.select()">
-        </span>
-        {% endif %}
+        </div>
         {% endfor %}
     </div>
     {% endif %}
