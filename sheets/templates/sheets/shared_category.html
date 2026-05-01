@@ -25,7 +25,13 @@
         <div class="sheet-grid">
             {% for sheet in sheets %}
             <div class="sheet-card">
-                <img src="{{ sheet.image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                {% if sheet.get_first_image %}
+                <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                {% else %}
+                <div class="sheet-thumbnail sheet-thumbnail-empty">
+                    <span>暂无图片</span>
+                </div>
+                {% endif %}
                 <div class="sheet-info">
                     <h3>{{ sheet.title }}</h3>
                 </div>

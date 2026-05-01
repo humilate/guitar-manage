@@ -43,7 +43,13 @@
         {% for sheet in sheets %}
         <div class="sheet-card">
             <a href="{% url 'sheet_detail' sheet.id %}">
-                <img src="{{ sheet.image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                {% if sheet.get_first_image %}
+                <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                {% else %}
+                <div class="sheet-thumbnail sheet-thumbnail-empty">
+                    <span>暂无图片</span>
+                </div>
+                {% endif %}
             </a>
             <div class="sheet-info">
                 <h3><a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a></h3>
@@ -52,6 +58,9 @@
                 {% endif %}
                 {% if sheet.is_shared %}
                 <span class="share-badge">已共享</span>
+                {% endif %}
+                {% if sheet.images.count > 1 %}
+                <span class="page-count-badge">{{ sheet.images.count }} 页</span>
                 {% endif %}
             </div>
             <div class="sheet-actions">

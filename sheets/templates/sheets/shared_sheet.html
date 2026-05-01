@@ -20,9 +20,20 @@
         <p class="sheet-category">分类：{{ sheet.category.name }}</p>
         {% endif %}
 
-        <div class="sheet-image-container">
-            <img src="{{ sheet.image.url }}" alt="{{ sheet.title }}" class="sheet-full-image">
+        {% if images %}
+        <div class="sheet-images-container">
+            {% for img in images %}
+            <div class="sheet-image-item">
+                <img src="{{ img.image.url }}" alt="{{ sheet.title }} - 第{{ forloop.counter }}页" class="sheet-full-image">
+                <div class="image-actions">
+                    <span class="page-label">第 {{ forloop.counter }} 页</span>
+                </div>
+            </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <p style="text-align: center; color: #718096;">该曲谱暂无图片</p>
+        {% endif %}
 
         <p class="shared-footer">此曲谱由 <strong>{{ sheet.owner.username }}</strong> 分享</p>
     </main>

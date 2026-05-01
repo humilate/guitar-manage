@@ -22,7 +22,6 @@ class Category(models.Model):
 
 class GuitarSheet(models.Model):
     title = models.CharField(max_length=200, verbose_name='曲谱名称')
-    image = models.ImageField(upload_to='sheets/%Y/%m/%d/', verbose_name='曲谱图片')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='sheets', verbose_name='分类')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sheets', verbose_name='所有者')
     share_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, verbose_name='分享令牌')
@@ -37,3 +36,25 @@ class GuitarSheet(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_images(self):
+        return self.images.all()
+
+    def get_first_image(self):
+        first = self.images.first()
+        return first.image if first else None
+
+
+class SheetImage(models.Model):
+    sheet = models.ForeignKey(GuitarSheet, on_delete=models.CASCADE, related_name='images', verbose_name='所属曲谱')
+    image = models.ImageField(upload_to='sheets/%Y/%m/%d/', verbose_name='曲谱图片')
+    page_number = models.PositiveIntegerField(default=0, verbose_name='页码')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
+
+    class Meta:
+        verbose_name = '曲谱图片'
+        verbose_name_plural = '曲谱图片'
+        ordering = ['page_number']
+
+    def __str__(self):
+        return f'{self.sheet.title} - 第{self.page_number + 1}页'

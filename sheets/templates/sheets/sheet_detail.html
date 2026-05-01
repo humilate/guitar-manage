@@ -27,13 +27,26 @@
     </div>
     {% endif %}
 
-    <div class="sheet-image-container">
-        <img src="{{ sheet.image.url }}" alt="{{ sheet.title }}" class="sheet-full-image">
+    {% if images %}
+    <div class="sheet-images-container">
+        {% for img in images %}
+        <div class="sheet-image-item">
+            <img src="{{ img.image.url }}" alt="{{ sheet.title }} - 第{{ forloop.counter }}页" class="sheet-full-image">
+            <div class="image-actions">
+                <span class="page-label">第 {{ forloop.counter }} 页</span>
+                <a href="{% url 'delete_image' img.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定删除这张图片吗？')">删除</a>
+            </div>
+        </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <p style="text-align: center; color: #718096;">该曲谱暂无图片</p>
+    {% endif %}
 
     <div class="sheet-meta">
         <p>创建时间：{{ sheet.created_at|date:"Y-m-d H:i" }}</p>
         <p>更新时间：{{ sheet.updated_at|date:"Y-m-d H:i" }}</p>
+        <p>图片数量：{{ images|length }} 张</p>
     </div>
 </div>
 {% endblock %}

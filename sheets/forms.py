@@ -17,12 +17,18 @@ class UserRegisterForm(UserCreationForm):
 
 
 class GuitarSheetForm(forms.ModelForm):
+    images = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={'multiple': True}),
+        required=False,
+        label='曲谱图片',
+        help_text='支持一次上传多张图片'
+    )
+
     class Meta:
         model = GuitarSheet
-        fields = ['title', 'image', 'category']
+        fields = ['title', 'category']
         labels = {
             'title': '曲谱名称',
-            'image': '曲谱图片',
             'category': '分类',
         }
 

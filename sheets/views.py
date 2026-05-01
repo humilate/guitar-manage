@@ -3,14 +3,14 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from .models import GuitarSheet, Category
+from .models import GuitarSheet, Category, SheetImage
 from .forms import UserRegisterForm, GuitarSheetForm, CategoryForm
 
 
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
-    
+
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
@@ -20,14 +20,14 @@ def register_view(request):
             return redirect('dashboard')
     else:
         form = UserRegisterForm()
-    
+
     return render(request, 'sheets/register.html', {'form': form})
 
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
-    
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -38,7 +38,7 @@ def login_view(request):
             return redirect('dashboard')
         else:
             messages.error(request, '用户名或密码错误')
-    
+
     return render(request, 'sheets/login.html')
 
 
@@ -53,18 +53,18 @@ def logout_view(request):
 def dashboard(request):
     categories = Category.objects.filter(owner=request.user)
     sheets = GuitarSheet.objects.filter(owner=request.user)
-    
+
     category_id = request.GET.get('category')
     if category_id:
         sheets = sheets.filter(category_id=category_id)
-    
+
     search_query = request.GET.get('search')
     if search_query:
         sheets = sheets.filter(
             Q(title__icontains=search_query) |
             Q(category__name__icontains=search_query)
         )
-    
+
     context = {
         'categories': categories,
         'sheets': sheets,
@@ -82,27 +82,38 @@ def add_sheet(request):
             sheet = form.save(commit=False)
             sheet.owner = request.user
             sheet.save()
+
+            images = request.FILES.getlist('images')
+            if images:
+                for i, img in enumerate(images):
+                    SheetImage.objects.create(sheet=sheet, image=img, page_number=i)
             messages.success(request, '曲谱上传成功！')
             return redirect('dashboard')
     else:
         form = GuitarSheetForm()
-    
+
     return render(request, 'sheets/sheet_form.html', {'form': form, 'title': '上传曲谱'})
 
 
 @login_required
 def edit_sheet(request, pk):
     sheet = get_object_or_404(GuitarSheet, pk=pk, owner=request.user)
-    
+
     if request.method == 'POST':
-        form = GuitarSheetForm(request.POST, request.FILES, instance=sheet)
+        form = GuitarSheetForm(request.POST, instance=sheet)
         if form.is_valid():
             form.save()
+
+            images = request.FILES.getlist('images')
+            if images:
+                max_page = sheet.images.count()
+                for i, img in enumerate(images):
+                    SheetImage.objects.create(sheet=sheet, image=img, page_number=max_page + i)
             messages.success(request, '曲谱更新成功！')
             return redirect('dashboard')
     else:
         form = GuitarSheetForm(instance=sheet)
-    
+
     return render(request, 'sheets/sheet_form.html', {'form': form, 'title': '编辑曲谱'})
 
 
@@ -128,14 +139,14 @@ def add_category(request):
             return redirect('dashboard')
     else:
         form = CategoryForm()
-    
+
     return render(request, 'sheets/category_form.html', {'form': form, 'title': '创建分类'})
 
 
 @login_required
 def edit_category(request, pk):
     category = get_object_or_404(Category, pk=pk, owner=request.user)
-    
+
     if request.method == 'POST':
         form = CategoryForm(request.POST, instance=category)
         if form.is_valid():
@@ -144,7 +155,7 @@ def edit_category(request, pk):
             return redirect('dashboard')
     else:
         form = CategoryForm(instance=category)
-    
+
     return render(request, 'sheets/category_form.html', {'form': form, 'title': '编辑分类'})
 
 
@@ -178,9 +189,19 @@ def toggle_category_share(request, pk):
     return redirect('dashboard')
 
 
+@login_required
+def delete_image(request, pk):
+    image = get_object_or_404(SheetImage, pk=pk, sheet__owner=request.user)
+    sheet = image.sheet
+    image.delete()
+    messages.success(request, '图片已删除')
+    return redirect('sheet_detail', pk=sheet.pk)
+
+
 def shared_sheet(request, token):
     sheet = get_object_or_404(GuitarSheet, share_token=token, is_shared=True)
-    return render(request, 'sheets/shared_sheet.html', {'sheet': sheet})
+    images = sheet.images.all()
+    return render(request, 'sheets/shared_sheet.html', {'sheet': sheet, 'images': images})
 
 
 def shared_category(request, token):
@@ -192,4 +213,5 @@ def shared_category(request, token):
 @login_required
 def sheet_detail(request, pk):
     sheet = get_object_or_404(GuitarSheet, pk=pk, owner=request.user)
-    return render(request, 'sheets/sheet_detail.html', {'sheet': sheet})
+    images = sheet.images.all()
+    return render(request, 'sheets/sheet_detail.html', {'sheet': sheet, 'images': images})

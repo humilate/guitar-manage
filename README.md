@@ -190,13 +190,20 @@ python manage.py runserver
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | title | CharField | 曲谱名称 |
-| image | ImageField | 曲谱图片 |
 | category | ForeignKey | 所属分类 |
 | owner | ForeignKey | 所有者（用户） |
 | share_token | UUIDField | 分享令牌（唯一） |
 | is_shared | BooleanField | 是否共享 |
 | created_at | DateTimeField | 创建时间 |
 | updated_at | DateTimeField | 更新时间 |
+
+### SheetImage（曲谱图片）
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| sheet | ForeignKey | 所属曲谱 |
+| image | ImageField | 曲谱图片 |
+| page_number | PositiveIntegerField | 页码 |
+| created_at | DateTimeField | 上传时间 |
 
 ## 开发
 
