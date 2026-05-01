@@ -3,6 +3,112 @@
 {% block title %}{{ sheet.title }} - 吉他曲谱管理系统{% endblock %}
 
 {% block content %}
+<style>
+    .sheet-full-image {
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .sheet-full-image:hover {
+        opacity: 0.85;
+    }
+    .viewer-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.95);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .viewer-overlay.active {
+        display: flex;
+    }
+    .viewer-close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        color: #fff;
+        font-size: 2rem;
+        cursor: pointer;
+        z-index: 10;
+        background: rgba(0,0,0,0.5);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+    }
+    .viewer-close:hover {
+        background: rgba(0,0,0,0.7);
+    }
+    .viewer-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #fff;
+        font-size: 2.5rem;
+        cursor: pointer;
+        background: rgba(0,0,0,0.4);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        transition: background 0.2s;
+    }
+    .viewer-nav:hover {
+        background: rgba(0,0,0,0.7);
+    }
+    .viewer-prev { left: 20px; }
+    .viewer-next { right: 20px; }
+    .viewer-img-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        width: 85vw;
+        height: 80vh;
+    }
+    .viewer-img-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+    .viewer-info {
+        color: #fff;
+        margin-top: 1rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    .viewer-page-label {
+        font-size: 1rem;
+    }
+    .viewer-download {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.5rem 1rem;
+        background: #48bb78;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .viewer-download:hover {
+        background: #38a169;
+    }
+</style>
+
 <div class="sheet-detail">
     <div class="sheet-detail-header">
         {% if sheet.category and sheet.category.owner == request.user or sheet.category and request.user in sheet.category.members.all %}
@@ -25,9 +131,9 @@
     <div class="sheet-images-container">
         {% for img in images %}
         <div class="sheet-image-item">
-            <img src="{{ img.image.url }}" alt="{{ sheet.title }} - 第{{ forloop.counter }}页" class="sheet-full-image">
+            <img src="{{ img.image.url }}" alt="{{ sheet.title }} - 第{{ forloop.counter }}页" class="sheet-full-image" onclick="openViewer({{ forloop.counter0 }})">
             <div class="image-actions">
-                <span class="page-label">第 {{ forloop.counter }} 页</span>
+                <span class="page-label">第 {{ forloop.counter }} 页 <span style="font-size:0.75rem; color:#a0aec0;">(点击放大)</span></span>
                 <a href="{% url 'delete_image' img.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定删除这张图片吗？')">删除</a>
             </div>
         </div>
@@ -43,4 +149,72 @@
         <p>图片数量：{{ images|length }} 张</p>
     </div>
 </div>
+
+<div class="viewer-overlay" id="viewerOverlay">
+    <button class="viewer-close" onclick="closeViewer()">&times;</button>
+    <button class="viewer-nav viewer-prev" id="viewerPrev" onclick="viewerNavigate(-1)">&#8249;</button>
+    <button class="viewer-nav viewer-next" id="viewerNext" onclick="viewerNavigate(1)">&#8250;</button>
+    <div class="viewer-img-container">
+        <img id="viewerImg" src="" alt="">
+    </div>
+    <div class="viewer-info">
+        <span class="viewer-page-label" id="viewerPageLabel"></span>
+        <a class="viewer-download" id="viewerDownload" href="" download>
+            ⬇ 下载图片
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var imageData = [];
+    {% for img in images %}
+    imageData.push({
+        url: '{{ img.image.url }}',
+        label: '第 {{ forloop.counter }} 页 / 共 {{ images|length }} 页'
+    });
+    {% endfor %}
+
+    var currentIndex = 0;
+
+    window.openViewer = function(index) {
+        currentIndex = index;
+        updateViewer();
+        document.getElementById('viewerOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeViewer = function() {
+        document.getElementById('viewerOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    window.viewerNavigate = function(direction) {
+        currentIndex += direction;
+        if (currentIndex < 0) currentIndex = imageData.length - 1;
+        if (currentIndex >= imageData.length) currentIndex = 0;
+        updateViewer();
+    };
+
+    function updateViewer() {
+        var data = imageData[currentIndex];
+        document.getElementById('viewerImg').src = data.url;
+        document.getElementById('viewerPageLabel').textContent = data.label;
+        document.getElementById('viewerDownload').href = data.url;
+        document.getElementById('viewerPrev').style.display = imageData.length > 1 ? 'flex' : 'none';
+        document.getElementById('viewerNext').style.display = imageData.length > 1 ? 'flex' : 'none';
+    }
+
+    document.getElementById('viewerOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeViewer();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (!document.getElementById('viewerOverlay').classList.contains('active')) return;
+        if (e.key === 'Escape') closeViewer();
+        if (e.key === 'ArrowLeft') viewerNavigate(-1);
+        if (e.key === 'ArrowRight') viewerNavigate(1);
+    });
+});
+</script>
 {% endblock %}
