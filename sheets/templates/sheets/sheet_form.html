@@ -8,6 +8,7 @@
     <form method="post" enctype="multipart/form-data" class="form-card">
         {% csrf_token %}
         {% for field in form %}
+        {% if field.name != 'images' %}
         <div class="form-group">
             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
@@ -18,7 +19,13 @@
             <small class="help-text">{{ field.help_text }}</small>
             {% endif %}
         </div>
+        {% endif %}
         {% endfor %}
+        <div class="form-group">
+            <label for="id_images">曲谱图片</label>
+            <input type="file" name="images" id="id_images" multiple style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 1rem;">
+            <small class="help-text">支持一次上传多张图片，可按住 Ctrl 多选</small>
+        </div>
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">保存</button>
             <a href="{% url 'dashboard' %}" class="btn btn-outline">取消</a>
