@@ -5,7 +5,11 @@
 {% block content %}
 <div class="sheet-detail">
     <div class="sheet-detail-header">
+        {% if sheet.category and sheet.category.owner == request.user or sheet.category and request.user in sheet.category.members.all %}
+        <a href="{% url 'category_detail' sheet.category.id %}" class="btn btn-outline">返回分类</a>
+        {% else %}
         <a href="{% url 'dashboard' %}" class="btn btn-outline">返回列表</a>
+        {% endif %}
         <div class="sheet-detail-actions">
             <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-primary">编辑</a>
             <a href="{% url 'toggle_share' sheet.id %}" class="btn {% if sheet.is_shared %}btn-warning{% else %}btn-success{% endif %}">

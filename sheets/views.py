@@ -254,10 +254,13 @@ def upload_folder(request):
 
 @login_required
 def edit_sheet(request, pk):
-    sheet = get_object_or_404(GuitarSheet, pk=pk, owner=request.user)
+    sheet = get_object_or_404(GuitarSheet, pk=pk)
+    if sheet.owner != request.user:
+        if not sheet.category or not user_can_access_category(request.user, sheet.category):
+            raise Http404
 
     if request.method == 'POST':
-        form = GuitarSheetForm(request.POST, instance=sheet, user=request.user)
+        form = GuitarSheetForm(request.POST, request.FILES, instance=sheet, user=request.user)
         if form.is_valid():
             form.save()
 
@@ -267,11 +270,11 @@ def edit_sheet(request, pk):
                 for i, img in enumerate(images):
                     SheetImage.objects.create(sheet=sheet, image=img, page_number=max_page + i)
             messages.success(request, '曲谱更新成功！')
-            return redirect('dashboard')
+            return redirect('category_detail', pk=sheet.category.id) if sheet.category else redirect('dashboard')
     else:
         form = GuitarSheetForm(instance=sheet, user=request.user)
 
-    return render(request, 'sheets/sheet_form.html', {'form': form, 'title': '编辑曲谱'})
+    return render(request, 'sheets/sheet_form.html', {'form': form, 'title': '编辑曲谱', 'sheet': sheet})
 
 
 @login_required
@@ -348,11 +351,15 @@ def toggle_category_share(request, pk):
 
 @login_required
 def delete_image(request, pk):
-    image = get_object_or_404(SheetImage, pk=pk, sheet__owner=request.user)
+    image = get_object_or_404(SheetImage, pk=pk)
     sheet = image.sheet
+    if sheet.owner != request.user:
+        if not sheet.category or not user_can_access_category(request.user, sheet.category):
+            raise Http404
+    sheet_id = sheet.pk
     image.delete()
     messages.success(request, '图片已删除')
-    return redirect('sheet_detail', pk=sheet.pk)
+    return redirect('sheet_detail', pk=sheet_id)
 
 
 def shared_sheet(request, token):
