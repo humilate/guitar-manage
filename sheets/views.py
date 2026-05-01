@@ -368,21 +368,27 @@ def shared_sheet(request, token):
     return render(request, 'sheets/shared_sheet.html', {'sheet': sheet, 'images': images})
 
 
+@login_required
 def shared_category(request, token):
     category = get_object_or_404(Category, share_token=token, is_shared=True)
-    sheets = category.sheets.all()
+    if not user_can_access_category(request.user, category):
+        raise Http404
+    
+    sheets = GuitarSheet.objects.filter(category=category)
 
     search_query = request.GET.get('search')
     if search_query:
         sheets = sheets.filter(title__icontains=search_query)
 
-    is_member = request.user.is_authenticated and category.members.filter(id=request.user.id).exists()
+    is_member = category.members.filter(id=request.user.id).exists()
+    is_owner = category.owner == request.user
 
     context = {
         'category': category,
         'sheets': sheets,
         'search_query': search_query,
         'is_member': is_member,
+        'is_owner': is_owner,
     }
     return render(request, 'sheets/shared_category.html', context)
 
