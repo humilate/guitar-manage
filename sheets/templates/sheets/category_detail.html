@@ -14,8 +14,6 @@
             {% if is_owner %}
             <a href="{% url 'manage_category_members' category.id %}" class="btn btn-outline">管理成员</a>
             <a href="{% url 'edit_category' category.id %}" class="btn btn-outline">编辑分类</a>
-            {% endif %}
-            {% if not is_shared %}
             <a href="{% url 'toggle_category_share' category.id %}" class="btn {% if category.is_shared %}btn-warning{% else %}btn-success{% endif %}">
                 {% if category.is_shared %}取消共享{% else %}共享分类{% endif %}
             </a>
@@ -37,13 +35,6 @@
     {% if is_member and not is_owner %}
     <div class="alert" style="background: #ebf8ff; padding: 0.75rem 1rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid #4299e1;">
         <p style="color: #2c5282; margin: 0; font-size: 0.875rem;">您是该分类的成员。</p>
-    </div>
-    {% endif %}
-
-    {% if is_shared %}
-    <div style="background: #f7fafc; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem;">
-        <p style="font-size: 0.875rem; color: #718096; margin-bottom: 0.5rem;">分享链接：</p>
-        <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_category' category.share_token %}" readonly style="width: 100%; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.8rem;" onclick="this.select()">
     </div>
     {% endif %}
 

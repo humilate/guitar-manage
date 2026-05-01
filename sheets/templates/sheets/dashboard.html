@@ -140,6 +140,9 @@
                     <a href="{% url 'category_detail' category.id %}" style="text-decoration: none; color: inherit;">
                         <strong>{{ category.name }}</strong>
                     </a>
+                    {% if category.owner != request.user %}
+                    <span style="font-size: 0.7rem; color: #4299e1;">(成员)</span>
+                    {% endif %}
                     {% if category.is_shared %}
                     <span class="share-badge">已共享</span>
                     {% endif %}
@@ -149,11 +152,13 @@
                     {% if category.is_shared %}
                     <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_category' category.share_token %}" readonly style="width: 280px; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.8rem;" onclick="this.select()">
                     {% endif %}
+                    {% if category.owner == request.user %}
                     <a href="{% url 'toggle_category_share' category.id %}" class="btn btn-sm {% if category.is_shared %}btn-warning{% else %}btn-success{% endif %}">
                         {% if category.is_shared %}取消共享{% else %}共享分类{% endif %}
                     </a>
                     <a href="{% url 'edit_category' category.id %}" class="btn btn-sm btn-outline">编辑</a>
                     <a href="{% url 'delete_category' category.id %}" class="btn btn-sm btn-danger">删除</a>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
