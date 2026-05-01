@@ -34,6 +34,12 @@
     </div>
     {% endif %}
 
+    {% if is_member and not is_owner %}
+    <div class="alert" style="background: #fffbeb; padding: 0.75rem 1rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid #f59e0b;">
+        <p style="color: #92400e; margin: 0; font-size: 0.875rem;">您是该分类的成员，只能管理自己上传的曲谱。</p>
+    </div>
+    {% endif %}
+
     <div class="search-bar">
         <form method="get" class="search-form">
             <input type="text" name="search" placeholder="在此分类中搜索曲谱..." value="{{ search_query|default:'' }}">
@@ -55,7 +61,7 @@
             <select name="category_id" id="batchCategory" style="display: none; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.85rem;">
                 <option value="">选择目标分类</option>
                 <option value="none">-- 无分类 --</option>
-                {% for cat in request.user.categories.all %}
+                {% for cat in owned_categories %}
                 <option value="{{ cat.id }}">{{ cat.name }}</option>
                 {% endfor %}
             </select>

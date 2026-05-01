@@ -102,6 +102,8 @@ def category_detail(request, pk):
     is_member = request.user.id in list(category.members.values_list('id', flat=True))
     is_owner = category.owner == request.user
     
+    owned_categories = Category.objects.filter(owner=request.user).exclude(pk=pk)
+    
     sheets = GuitarSheet.objects.filter(category=category)
 
     search_query = request.GET.get('search')
@@ -119,6 +121,8 @@ def category_detail(request, pk):
         'search_query': search_query,
         'is_owner': is_owner,
         'is_member': is_member,
+        'is_shared': category.is_shared,
+        'owned_categories': owned_categories,
     }
     return render(request, 'sheets/category_detail.html', context)
 
