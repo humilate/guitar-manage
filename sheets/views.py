@@ -1,14 +1,12 @@
 import os
 import zipfile
-import tempfile
 from django.conf import settings
-from django.core.files.uploadedfile import UploadedFile
-from django.core.files.storage import default_storage
-from django.db import transaction
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q
 from .models import GuitarSheet, Category, SheetImage
 from .forms import UserRegisterForm, GuitarSheetForm, CategoryForm
@@ -72,13 +70,35 @@ def dashboard(request):
             Q(category__name__icontains=search_query)
         )
 
+    paginator = Paginator(sheets, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
         'categories': categories,
-        'sheets': sheets,
+        'page_obj': page_obj,
+        'sheets': page_obj,
         'current_category': category_id,
         'search_query': search_query,
     }
     return render(request, 'sheets/dashboard.html', context)
+
+
+@login_required
+def category_detail(request, pk):
+    category = get_object_or_404(Category, pk=pk, owner=request.user)
+    sheets = GuitarSheet.objects.filter(owner=request.user, category=category)
+
+    paginator = Paginator(sheets, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'category': category,
+        'page_obj': page_obj,
+        'current_category': str(pk),
+    }
+    return render(request, 'sheets/category_detail.html', context)
 
 
 @login_required

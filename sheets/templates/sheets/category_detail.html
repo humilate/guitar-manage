@@ -1,0 +1,93 @@
+{% extends 'sheets/base.html' %}
+
+{% block title %}{{ category.name }} - 吉他曲谱管理系统{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <div>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline" style="margin-bottom: 0.5rem;">&larr; 返回</a>
+            <h1>{{ category.name }}</h1>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{% url 'add_sheet' %}?category={{ category.id }}" class="btn btn-primary">上传曲谱</a>
+            <a href="{% url 'edit_category' category.id %}" class="btn btn-outline">编辑分类</a>
+            <a href="{% url 'toggle_category_share' category.id %}" class="btn {% if category.is_shared %}btn-warning{% else %}btn-success{% endif %}">
+                {% if category.is_shared %}取消共享{% else %}共享分类{% endif %}
+            </a>
+        </div>
+    </div>
+
+    {% if category.description %}
+    <p style="color: #718096; margin-bottom: 1.5rem;">{{ category.description }}</p>
+    {% endif %}
+
+    {% if category.is_shared %}
+    <div style="background: #f7fafc; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem;">
+        <p style="font-size: 0.875rem; color: #718096; margin-bottom: 0.5rem;">分享链接：</p>
+        <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_category' category.share_token %}" readonly style="width: 100%; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.8rem;" onclick="this.select()">
+    </div>
+    {% endif %}
+
+    {% if sheets %}
+    <div class="sheet-grid">
+        {% for sheet in sheets %}
+        <div class="sheet-card">
+            <a href="{% url 'sheet_detail' sheet.id %}">
+                {% if sheet.get_first_image %}
+                <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                {% else %}
+                <div class="sheet-thumbnail sheet-thumbnail-empty">
+                    <span>暂无图片</span>
+                </div>
+                {% endif %}
+            </a>
+            <div class="sheet-info">
+                <h3><a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a></h3>
+                {% if sheet.is_shared %}
+                <span class="share-badge">已共享</span>
+                {% endif %}
+                {% if sheet.images.count > 1 %}
+                <span class="page-count-badge">{{ sheet.images.count }} 页</span>
+                {% endif %}
+            </div>
+            <div class="sheet-actions">
+                <a href="{% url 'sheet_detail' sheet.id %}" class="btn btn-sm">查看</a>
+                <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-sm btn-outline">编辑</a>
+                {% if sheet.is_shared %}
+                <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
+                {% endif %}
+                <a href="{% url 'toggle_share' sheet.id %}" class="btn btn-sm {% if sheet.is_shared %}btn-warning{% else %}btn-success{% endif %}">
+                    {% if sheet.is_shared %}取消共享{% else %}共享{% endif %}
+                </a>
+                <a href="{% url 'delete_sheet' sheet.id %}" class="btn btn-sm btn-danger">删除</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem;">
+        {% if page_obj.has_previous %}
+        <a href="?page=1" class="btn btn-sm btn-outline">&laquo; 首页</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm btn-outline">&lsaquo; 上一页</a>
+        {% endif %}
+
+        <span style="color: #718096; font-size: 0.9rem;">
+            第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm btn-outline">下一页 &rsaquo;</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm btn-outline">末页 &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <p>该分类下还没有曲谱，点击"上传曲谱"开始添加吧！</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -15,6 +15,7 @@ urlpatterns = [
     path('sheet/image/<int:pk>/delete/', views.delete_image, name='delete_image'),
     path('shared/<uuid:token>/', views.shared_sheet, name='shared_sheet'),
     path('category/add/', views.add_category, name='add_category'),
+    path('category/<int:pk>/', views.category_detail, name='category_detail'),
     path('category/<int:pk>/edit/', views.edit_category, name='edit_category'),
     path('category/<int:pk>/delete/', views.delete_category, name='delete_category'),
     path('category/<int:pk>/share/', views.toggle_category_share, name='toggle_category_share'),
