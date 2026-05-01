@@ -42,7 +42,11 @@
         <div class="sheet-grid">
             {% for sheet in sheets %}
             <div class="sheet-card">
+                {% if is_member or is_owner %}
+                <a href="{% url 'sheet_detail' sheet.id %}">
+                {% else %}
                 <a href="{% url 'shared_sheet' sheet.share_token %}">
+                {% endif %}
                     {% if sheet.get_first_image %}
                     <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
                     {% else %}
@@ -52,7 +56,11 @@
                     {% endif %}
                 </a>
                 <div class="sheet-info">
+                    {% if is_member or is_owner %}
+                    <h3><a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a></h3>
+                    {% else %}
                     <h3><a href="{% url 'shared_sheet' sheet.share_token %}">{{ sheet.title }}</a></h3>
+                    {% endif %}
                     {% if sheet.images.count > 1 %}
                     <span class="page-count-badge">{{ sheet.images.count }} 页</span>
                     {% endif %}

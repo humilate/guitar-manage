@@ -69,7 +69,9 @@
         <div class="sheet-grid">
             {% for sheet in sheets %}
             <div class="sheet-card" style="position: relative;">
+                {% if sheet.owner == request.user %}
                 <input type="checkbox" name="sheet_ids" value="{{ sheet.id }}" class="sheet-checkbox" style="position: absolute; top: 10px; left: 10px; z-index: 2; width: 20px; height: 20px; cursor: pointer;">
+                {% endif %}
                 <a href="{% url 'sheet_detail' sheet.id %}">
                     {% if sheet.get_first_image %}
                     <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
@@ -90,6 +92,7 @@
                 </div>
                 <div class="sheet-actions">
                     <a href="{% url 'sheet_detail' sheet.id %}" class="btn btn-sm">查看</a>
+                    {% if sheet.owner == request.user %}
                     <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-sm btn-outline">编辑</a>
                     {% if sheet.is_shared %}
                     <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
@@ -98,6 +101,7 @@
                         {% if sheet.is_shared %}取消共享{% else %}共享{% endif %}
                     </a>
                     <a href="{% url 'delete_sheet' sheet.id %}" class="btn btn-sm btn-danger">删除</a>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
