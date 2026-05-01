@@ -104,6 +104,7 @@ def category_detail(request, pk):
     context = {
         'category': category,
         'page_obj': page_obj,
+        'sheets': page_obj,
         'search_query': search_query,
     }
     return render(request, 'sheets/category_detail.html', context)
