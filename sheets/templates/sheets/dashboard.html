@@ -4,11 +4,11 @@
 
 {% block content %}
 <div class="dashboard">
-    <div class="dashboard-header">
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <h1>我的曲谱</h1>
-        <div class="dashboard-actions">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
             <a href="{% url 'add_category' %}" class="btn btn-outline">新建分类</a>
-            <a href="{% url 'add_sheet' %}" class="btn btn-primary">上传曲谱</a>
+            <a href="{% url 'add_sheet' %}" class="btn btn-outline">上传曲谱</a>
             <a href="{% url 'upload_folder' %}" class="btn btn-success">批量上传文件夹</a>
         </div>
     </div>

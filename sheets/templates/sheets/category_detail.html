@@ -4,13 +4,13 @@
 
 {% block content %}
 <div class="dashboard">
-    <div class="dashboard-header">
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <a href="{% url 'dashboard' %}" class="btn btn-outline" style="margin-bottom: 0.5rem;">&larr; 返回</a>
             <h1>{{ category.name }}</h1>
         </div>
-        <div class="dashboard-actions">
-            <a href="{% url 'add_sheet' %}?category={{ category.id }}" class="btn btn-primary">上传曲谱</a>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline">&larr; 返回</a>
+            <a href="{% url 'add_sheet' %}?category={{ category.id }}" class="btn btn-outline">上传曲谱</a>
             {% if is_owner %}
             <a href="{% url 'manage_category_members' category.id %}" class="btn btn-outline">管理成员</a>
             <a href="{% url 'edit_category' category.id %}" class="btn btn-outline">编辑分类</a>
