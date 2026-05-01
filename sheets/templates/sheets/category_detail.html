@@ -11,13 +11,15 @@
         </div>
         <div class="dashboard-actions">
             <a href="{% url 'add_sheet' %}?category={{ category.id }}" class="btn btn-primary">上传曲谱</a>
-            {% if category.owner == request.user %}
+            {% if is_owner %}
             <a href="{% url 'manage_category_members' category.id %}" class="btn btn-outline">管理成员</a>
             <a href="{% url 'edit_category' category.id %}" class="btn btn-outline">编辑分类</a>
             {% endif %}
+            {% if not is_shared %}
             <a href="{% url 'toggle_category_share' category.id %}" class="btn {% if category.is_shared %}btn-warning{% else %}btn-success{% endif %}">
                 {% if category.is_shared %}取消共享{% else %}共享分类{% endif %}
             </a>
+            {% endif %}
         </div>
     </div>
 

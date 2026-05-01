@@ -25,6 +25,15 @@ class GuitarSheetForm(forms.ModelForm):
             'category': '分类',
         }
 
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if self.user:
+            owned_cats = Category.objects.filter(owner=self.user)
+            member_cats = Category.objects.filter(members=self.user)
+            all_cats = (owned_cats | member_cats).distinct()
+            self.fields['category'].queryset = all_cats
+
 
 class CategoryForm(forms.ModelForm):
     class Meta:

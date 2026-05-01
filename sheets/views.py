@@ -99,11 +99,14 @@ def category_detail(request, pk):
     if not user_can_access_category(request.user, category):
         raise Http404
     
+    is_member = request.user in category.members.all()
+    is_owner = category.owner == request.user
+    
     sheets = GuitarSheet.objects.filter(category=category)
-    if category.owner == request.user or request.user in category.members.all():
-        sheets = sheets.filter(owner__in=[request.user])
-    else:
+    if not is_owner and not is_member:
         sheets = GuitarSheet.objects.none()
+    else:
+        sheets = sheets.filter(owner=request.user)
 
     search_query = request.GET.get('search')
     if search_query:
@@ -118,6 +121,8 @@ def category_detail(request, pk):
         'page_obj': page_obj,
         'sheets': page_obj,
         'search_query': search_query,
+        'is_owner': is_owner,
+        'is_member': is_member,
     }
     return render(request, 'sheets/category_detail.html', context)
 
@@ -125,7 +130,7 @@ def category_detail(request, pk):
 @login_required
 def add_sheet(request):
     if request.method == 'POST':
-        form = GuitarSheetForm(request.POST, request.FILES)
+        form = GuitarSheetForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             sheet = form.save(commit=False)
             sheet.owner = request.user
@@ -138,7 +143,7 @@ def add_sheet(request):
             messages.success(request, '曲谱上传成功！')
             return redirect('dashboard')
     else:
-        form = GuitarSheetForm()
+        form = GuitarSheetForm(user=request.user)
 
     return render(request, 'sheets/sheet_form.html', {'form': form, 'title': '上传曲谱'})
 
@@ -256,7 +261,7 @@ def edit_sheet(request, pk):
     sheet = get_object_or_404(GuitarSheet, pk=pk, owner=request.user)
 
     if request.method == 'POST':
-        form = GuitarSheetForm(request.POST, instance=sheet)
+        form = GuitarSheetForm(request.POST, instance=sheet, user=request.user)
         if form.is_valid():
             form.save()
 
@@ -268,7 +273,7 @@ def edit_sheet(request, pk):
             messages.success(request, '曲谱更新成功！')
             return redirect('dashboard')
     else:
-        form = GuitarSheetForm(instance=sheet)
+        form = GuitarSheetForm(instance=sheet, user=request.user)
 
     return render(request, 'sheets/sheet_form.html', {'form': form, 'title': '编辑曲谱'})
 
