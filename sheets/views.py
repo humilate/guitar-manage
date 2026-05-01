@@ -158,32 +158,48 @@ def upload_folder(request):
         error_count = 0
         sheet_count = 0
         error_details = []
+        debug_info = []
 
         try:
             with zipfile.ZipFile(zip_file, 'r') as zf:
                 info_list = zf.infolist()
-                logger.info(f'ZIP 文件包含 {len(info_list)} 个文件')
+                debug_info.append(f'ZIP 文件包含 {len(info_list)} 个条目')
+                logger.info(f'ZIP 文件包含 {len(info_list)} 个条目')
+                
+                # 打印所有文件名用于调试
+                for i, info in enumerate(info_list):
+                    debug_info.append(f'[{i}] {info.filename} (dir={info.is_dir()}, size={info.file_size})')
+                    logger.info(f'[{i}] {info.filename} (dir={info.is_dir()}, size={info.file_size})')
                 
                 for idx, info in enumerate(info_list):
                     if info.is_dir():
+                        debug_info.append(f'跳过目录: {info.filename}')
                         continue
 
+                    # 尝试多种编码方式
                     original_bytes = info.filename.encode('cp437') if isinstance(info.filename, str) else info.filename
                     
-                    try:
-                        rel_path = original_bytes.decode('utf-8')
-                    except:
+                    rel_path = None
+                    for enc in ['utf-8', 'gbk', 'gb2312', 'big5']:
                         try:
-                            rel_path = original_bytes.decode('gbk')
+                            rel_path = original_bytes.decode(enc)
+                            debug_info.append(f'编码成功: {enc}')
+                            break
                         except:
-                            rel_path = info.filename
+                            continue
                     
+                    if not rel_path:
+                        rel_path = info.filename
+                        debug_info.append(f'使用原始文件名')
+                    
+                    rel_path = rel_path.replace('\\', '/')
                     parts = [p for p in rel_path.split('/') if p]
                     
+                    debug_info.append(f'路径: {rel_path}, 层级: {len(parts)}')
                     logger.info(f'文件 {idx}: {info.filename} -> {rel_path} -> {len(parts)} 层')
 
                     if len(parts) < 3:
-                        logger.warning(f'跳过: 层级不足 3 层: {rel_path}')
+                        debug_info.append(f'跳过: 层级不足')
                         continue
 
                     cat_name = parts[0]
@@ -191,11 +207,12 @@ def upload_folder(request):
                     img_filename = parts[2]
                     
                     if not is_image_file(img_filename):
-                        logger.warning(f'跳过: 不是图片文件 {img_filename}')
+                        debug_info.append(f'跳过: 非图片文件')
                         continue
 
                     try:
                         img_data = zf.read(info)
+                        debug_info.append(f'读取图片成功: {img_filename}, 大小: {len(img_data)} bytes')
 
                         category, created_cat = Category.objects.get_or_create(
                             name=cat_name,
@@ -203,10 +220,11 @@ def upload_folder(request):
                         )
                         
                         if created_cat:
+                            debug_info.append(f'创建分类: {cat_name}')
                             logger.info(f'创建分类: {cat_name}')
 
                         if category.owner != request.user:
-                            logger.warning(f'跳过: 分类不属于当前用户')
+                            debug_info.append(f'跳过: 分类不属于当前用户')
                             continue
 
                         sheet, created = GuitarSheet.objects.get_or_create(
@@ -216,6 +234,7 @@ def upload_folder(request):
                         )
                         if created:
                             sheet_count += 1
+                            debug_info.append(f'创建曲谱: {sheet_name}')
                             logger.info(f'创建曲谱: {sheet_name}')
 
                         from django.core.files.base import ContentFile
@@ -223,13 +242,21 @@ def upload_folder(request):
                         sheet_image = SheetImage(sheet=sheet, page_number=existing_count)
                         sheet_image.image.save(img_filename, ContentFile(img_data), save=True)
                         uploaded_count += 1
+                        debug_info.append(f'保存图片成功')
                         logger.info(f'保存图片: {img_filename}')
                     except Exception as e:
                         error_count += 1
                         error_details.append(f'{img_filename}: {str(e)}')
+                        debug_info.append(f'错误: {str(e)}')
                         logger.error(f'上传失败: {e}', exc_info=True)
 
+            debug_info.append(f'结果: {uploaded_count} 张图片, {sheet_count} 个曲谱, {error_count} 个错误')
             logger.info(f'上传完成: {uploaded_count} 张图片, {sheet_count} 个曲谱, {error_count} 个错误')
+            
+            # 在页面上显示调试信息（仅前 10 条）
+            if debug_info:
+                for msg in debug_info[:10]:
+                    messages.info(request, msg)
             
             if uploaded_count > 0:
                 messages.success(request, f'成功上传 {uploaded_count} 张图片，创建 {sheet_count} 个曲谱')
@@ -239,6 +266,7 @@ def upload_folder(request):
                 for detail in error_details[:3]:
                     messages.error(request, detail)
         except Exception as e:
+            debug_info.append(f'ZIP 处理失败: {str(e)}')
             logger.error(f'ZIP 文件处理失败: {e}', exc_info=True)
             messages.error(request, f'ZIP 文件处理失败: {str(e)}')
             
