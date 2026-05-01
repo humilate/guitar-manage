@@ -255,9 +255,11 @@ def upload_folder(request):
 @login_required
 def edit_sheet(request, pk):
     sheet = get_object_or_404(GuitarSheet, pk=pk)
-    if sheet.owner != request.user:
-        if not sheet.category or not user_can_access_category(request.user, sheet.category):
-            raise Http404
+    can_edit = sheet.owner == request.user
+    if not can_edit and sheet.category:
+        can_edit = sheet.category.owner == request.user or user_can_access_category(request.user, sheet.category)
+    if not can_edit:
+        raise Http404
 
     if request.method == 'POST':
         form = GuitarSheetForm(request.POST, request.FILES, instance=sheet, user=request.user)
@@ -279,11 +281,16 @@ def edit_sheet(request, pk):
 
 @login_required
 def delete_sheet(request, pk):
-    sheet = get_object_or_404(GuitarSheet, pk=pk, owner=request.user)
+    sheet = get_object_or_404(GuitarSheet, pk=pk)
+    can_delete = sheet.owner == request.user
+    if not can_delete and sheet.category:
+        can_delete = sheet.category.owner == request.user
+    if not can_delete:
+        raise Http404
     if request.method == 'POST':
         sheet.delete()
         messages.success(request, '曲谱已删除')
-        return redirect('dashboard')
+        return redirect('category_detail', pk=sheet.category.id) if sheet.category else redirect('dashboard')
     return render(request, 'sheets/confirm_delete.html', {'object': sheet, 'type': '曲谱'})
 
 
@@ -353,9 +360,11 @@ def toggle_category_share(request, pk):
 def delete_image(request, pk):
     image = get_object_or_404(SheetImage, pk=pk)
     sheet = image.sheet
-    if sheet.owner != request.user:
-        if not sheet.category or not user_can_access_category(request.user, sheet.category):
-            raise Http404
+    can_delete = sheet.owner == request.user
+    if not can_delete and sheet.category:
+        can_delete = sheet.category.owner == request.user
+    if not can_delete:
+        raise Http404
     sheet_id = sheet.pk
     image.delete()
     messages.success(request, '图片已删除')
@@ -463,6 +472,8 @@ def category_batch_update(request, pk):
     if not user_can_access_category(request.user, category):
         raise Http404
     
+    is_owner = category.owner == request.user
+    
     if request.method == 'POST':
         target_category_id = request.POST.get('category_id')
         mode = request.POST.get('mode', 'selected')
@@ -472,7 +483,10 @@ def category_batch_update(request, pk):
             target_category = get_object_or_404(Category, pk=target_category_id, owner=request.user)
         
         if mode == 'all':
-            sheets = GuitarSheet.objects.filter(category=category, owner=request.user)
+            if is_owner:
+                sheets = GuitarSheet.objects.filter(category=category)
+            else:
+                sheets = GuitarSheet.objects.filter(category=category, owner=request.user)
             updated = sheets.update(category=target_category)
         else:
             sheet_ids = request.POST.getlist('sheet_ids')
@@ -481,7 +495,12 @@ def category_batch_update(request, pk):
                 return redirect('category_detail', pk=pk)
             
             updated = 0
-            for sheet in GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user, category=category):
+            if is_owner:
+                sheets = GuitarSheet.objects.filter(pk__in=sheet_ids, category=category)
+            else:
+                sheets = GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user, category=category)
+            
+            for sheet in sheets:
                 sheet.category = target_category
                 sheet.save()
                 updated += 1
@@ -500,11 +519,16 @@ def category_batch_delete(request, pk):
     if not user_can_access_category(request.user, category):
         raise Http404
     
+    is_owner = category.owner == request.user
+    
     if request.method == 'POST':
         mode = request.POST.get('mode', 'selected')
         
         if mode == 'all':
-            sheets = GuitarSheet.objects.filter(category=category, owner=request.user)
+            if is_owner:
+                sheets = GuitarSheet.objects.filter(category=category)
+            else:
+                sheets = GuitarSheet.objects.filter(category=category, owner=request.user)
             deleted, _ = sheets.delete()
         else:
             sheet_ids = request.POST.getlist('sheet_ids')
@@ -512,7 +536,10 @@ def category_batch_delete(request, pk):
                 messages.warning(request, '请选择要删除的曲谱')
                 return redirect('category_detail', pk=pk)
             
-            deleted, _ = GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user, category=category).delete()
+            if is_owner:
+                deleted, _ = GuitarSheet.objects.filter(pk__in=sheet_ids, category=category).delete()
+            else:
+                deleted, _ = GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user, category=category).delete()
         
         if deleted > 0:
             messages.success(request, f'成功删除 {deleted} 首曲谱')
