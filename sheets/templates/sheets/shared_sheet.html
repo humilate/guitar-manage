@@ -99,6 +99,8 @@
             padding: 20px;
             width: 85vw;
             height: 80vh;
+            overflow: hidden;
+            position: relative;
         }
         .viewer-img-container img {
             max-width: 100%;
@@ -106,6 +108,46 @@
             object-fit: contain;
             display: block;
             margin: 0 auto;
+            transform-origin: center center;
+            transition: transform 0.15s ease-out;
+            cursor: grab;
+        }
+        .viewer-img-container img.zoomed {
+            cursor: move;
+        }
+        .zoom-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 5;
+        }
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .zoom-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .zoom-level {
+            color: #fff;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+            min-width: 50px;
+            text-align: center;
         }
         .viewer-info {
             color: #fff;
@@ -172,6 +214,12 @@
         <button class="viewer-nav viewer-next" id="viewerNext" onclick="viewerNavigate(1)">&#8250;</button>
         <div class="viewer-img-container">
             <img id="viewerImg" src="" alt="">
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomIn()" title="放大">+</button>
+                <span class="zoom-level" id="zoomLevel">100%</span>
+                <button class="zoom-btn" onclick="zoomOut()" title="缩小">−</button>
+                <button class="zoom-btn" onclick="resetZoom()" title="重置" style="font-size:0.85rem;"></button>
+            </div>
         </div>
         <div class="viewer-info">
             <span class="viewer-page-label" id="viewerPageLabel"></span>
@@ -202,13 +250,17 @@
         function closeViewer() {
             document.getElementById('viewerOverlay').classList.remove('active');
             document.body.style.overflow = '';
+            currentZoom = 1;
+            updateZoomLevel();
         }
 
         function viewerNavigate(direction) {
             currentIndex += direction;
             if (currentIndex < 0) currentIndex = imageData.length - 1;
             if (currentIndex >= imageData.length) currentIndex = 0;
+            currentZoom = 1;
             updateViewer();
+            updateZoomLevel();
         }
 
         function updateViewer() {
@@ -218,7 +270,97 @@
             document.getElementById('viewerDownload').href = data.url;
             document.getElementById('viewerPrev').style.display = imageData.length > 1 ? 'flex' : 'none';
             document.getElementById('viewerNext').style.display = imageData.length > 1 ? 'flex' : 'none';
+            applyZoom();
         }
+
+        function applyZoom() {
+            var img = document.getElementById('viewerImg');
+            img.style.transform = 'scale(' + currentZoom + ')';
+            if (currentZoom > 1) {
+                img.classList.add('zoomed');
+            } else {
+                img.classList.remove('zoomed');
+            }
+        }
+
+        function updateZoomLevel() {
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom + 0.25, 5);
+            applyZoom();
+            updateZoomLevel();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom - 0.25, 0.25);
+            applyZoom();
+            updateZoomLevel();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            applyZoom();
+            updateZoomLevel();
+        }
+
+        var viewerImg = document.getElementById('viewerImg');
+        var viewerContainer = document.querySelector('.viewer-img-container');
+
+        // Mouse wheel zoom
+        if (viewerContainer) {
+            viewerContainer.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    currentZoom = Math.min(currentZoom + 0.15, 5);
+                } else {
+                    currentZoom = Math.max(currentZoom - 0.15, 0.25);
+                }
+                applyZoom();
+                updateZoomLevel();
+            }, { passive: false });
+        }
+
+        // Drag to pan when zoomed
+        var isDragging = false;
+        var startX, startY, offsetX = 0, offsetY = 0;
+
+        viewerImg.addEventListener('mousedown', function(e) {
+            if (currentZoom <= 1) return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            var transform = viewerImg.style.transform;
+            var match = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/);
+            if (match) {
+                offsetX = parseFloat(match[1]);
+                offsetY = parseFloat(match[2]);
+            } else {
+                offsetX = 0;
+                offsetY = 0;
+            }
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            var dx = e.clientX - startX;
+            var dy = e.clientY - startY;
+            viewerImg.style.transform = 'scale(' + currentZoom + ') translate(' + (offsetX + dx) + 'px, ' + (offsetY + dy) + 'px)';
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                var transform = viewerImg.style.transform;
+                var match = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/);
+                if (match) {
+                    offsetX = parseFloat(match[1]);
+                    offsetY = parseFloat(match[2]);
+                }
+            }
+        });
 
         document.getElementById('viewerOverlay').addEventListener('click', function(e) {
             if (e.target === this) closeViewer();
@@ -229,6 +371,9 @@
             if (e.key === 'Escape') closeViewer();
             if (e.key === 'ArrowLeft') viewerNavigate(-1);
             if (e.key === 'ArrowRight') viewerNavigate(1);
+            if (e.key === '+' || e.key === '=') zoomIn();
+            if (e.key === '-') zoomOut();
+            if (e.key === '0') resetZoom();
         });
     </script>
 </body>
