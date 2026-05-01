@@ -1,0 +1,58 @@
+{% extends 'sheets/base.html' %}
+
+{% block title %}{{ title }} - 吉他曲谱管理系统{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>{{ title }}</h2>
+    <div class="form-card">
+        <div style="background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 5px; padding: 1rem; margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: #2c5282;">使用说明</h3>
+            <ol style="font-size: 0.9rem; color: #2c5282; padding-left: 1.5rem; line-height: 1.8;">
+                <li>将要上传的文件夹<strong>压缩成 ZIP 文件</strong></li>
+                <li>文件夹结构应为：<strong>分类名/曲谱名/图片.png</strong></li>
+                <li>例如：<code>流行歌曲/晴天/1.jpg</code></li>
+                <li>点击"选择 ZIP 文件"上传即可</li>
+            </ol>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_zip_file">ZIP 压缩包</label>
+                <input type="file" name="zip_file" id="id_zip_file" accept=".zip" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 1rem;">
+                <small class="help-text">选择包含曲谱文件夹的 ZIP 压缩包</small>
+            </div>
+
+            <div id="uploadProgress" style="display: none; margin-bottom: 1rem;">
+                <div style="background: #e2e8f0; border-radius: 5px; overflow: hidden; height: 24px;">
+                    <div id="progressBar" style="background: #667eea; height: 100%; width: 0%; transition: width 0.3s; text-align: center; line-height: 24px; color: white; font-size: 0.8rem;"></div>
+                </div>
+                <p id="progressText" style="text-align: center; color: #718096; margin-top: 0.5rem; font-size: 0.9rem;"></p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="submitBtn">开始上传</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    var fileInput = document.getElementById('id_zip_file');
+    if (!fileInput.files || !fileInput.files[0]) {
+        e.preventDefault();
+        alert('请先选择 ZIP 文件');
+        return;
+    }
+
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('progressText').textContent = '正在上传，请稍候...';
+    document.getElementById('progressBar').style.width = '30%';
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').textContent = '上传中...';
+});
+</script>
+{% endblock %}

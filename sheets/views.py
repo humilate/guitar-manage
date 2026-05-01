@@ -1,3 +1,10 @@
+import os
+import zipfile
+import tempfile
+from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
+from django.core.files.storage import default_storage
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
@@ -93,6 +100,76 @@ def add_sheet(request):
         form = GuitarSheetForm()
 
     return render(request, 'sheets/sheet_form.html', {'form': form, 'title': '上传曲谱'})
+
+
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'}
+
+
+def is_image_file(filename):
+    return os.path.splitext(filename)[1].lower() in IMAGE_EXTENSIONS
+
+
+@login_required
+def upload_folder(request):
+    if request.method == 'POST':
+        zip_file = request.FILES.get('zip_file')
+        if not zip_file:
+            messages.error(request, '请选择 ZIP 文件')
+            return render(request, 'sheets/upload_folder.html', {'title': '文件夹上传'})
+
+        uploaded_count = 0
+        error_count = 0
+
+        with transaction.atomic():
+            with zipfile.ZipFile(zip_file, 'r') as zf:
+                for info in zf.infolist():
+                    if info.is_dir():
+                        continue
+
+                    rel_path = info.filename.replace('\\', '/')
+                    parts = [p for p in rel_path.split('/') if p]
+
+                    if len(parts) < 2:
+                        continue
+
+                    cat_name = parts[0]
+                    sheet_name = parts[1]
+                    if not is_image_file(info.filename):
+                        continue
+
+                    try:
+                        img_data = zf.read(info.filename)
+                        img_name = os.path.basename(info.filename)
+
+                        category, _ = Category.objects.get_or_create(
+                            name=cat_name,
+                            defaults={'owner': request.user, 'description': f'自动创建：{cat_name}'}
+                        )
+
+                        if category.owner != request.user:
+                            continue
+
+                        sheet, _ = GuitarSheet.objects.get_or_create(
+                            title=sheet_name,
+                            category=category,
+                            owner=request.user
+                        )
+
+                        from django.core.files.base import ContentFile
+                        existing_count = SheetImage.objects.filter(sheet=sheet).count()
+                        sheet_image = SheetImage(sheet=sheet, page_number=existing_count)
+                        sheet_image.image.save(img_name, ContentFile(img_data), save=True)
+                        uploaded_count += 1
+                    except Exception:
+                        error_count += 1
+
+        if uploaded_count > 0:
+            messages.success(request, f'成功上传 {uploaded_count} 张图片')
+        if error_count > 0:
+            messages.warning(request, f'{error_count} 张图片上传失败')
+        return redirect('dashboard')
+
+    return render(request, 'sheets/upload_folder.html', {'title': '文件夹上传'})
 
 
 @login_required
