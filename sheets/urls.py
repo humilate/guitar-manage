@@ -20,4 +20,6 @@ urlpatterns = [
     path('category/<int:pk>/delete/', views.delete_category, name='delete_category'),
     path('category/<int:pk>/share/', views.toggle_category_share, name='toggle_category_share'),
     path('category/shared/<uuid:token>/', views.shared_category, name='shared_category'),
+    path('batch/update-category/', views.batch_update_category, name='batch_update_category'),
+    path('batch/delete/', views.batch_delete, name='batch_delete'),
 ]

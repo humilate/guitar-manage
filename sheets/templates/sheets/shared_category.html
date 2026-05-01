@@ -21,25 +21,42 @@
         {% endif %}
         <p style="color: #718096; margin-bottom: 2rem;">共 {{ sheets|length }} 首曲谱，由 <strong>{{ category.owner.username }}</strong> 分享</p>
 
+        <div class="search-bar" style="margin-bottom: 2rem;">
+            <form method="get" class="search-form">
+                <input type="text" name="search" placeholder="搜索曲谱..." value="{{ search_query|default:'' }}">
+                <button type="submit" class="btn btn-primary">搜索</button>
+                {% if search_query %}
+                <a href="{{ request.path }}" class="btn btn-outline">清除</a>
+                {% endif %}
+            </form>
+        </div>
+
         {% if sheets %}
         <div class="sheet-grid">
             {% for sheet in sheets %}
             <div class="sheet-card">
-                {% if sheet.get_first_image %}
-                <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
-                {% else %}
-                <div class="sheet-thumbnail sheet-thumbnail-empty">
-                    <span>暂无图片</span>
-                </div>
-                {% endif %}
+                <a href="{% url 'shared_sheet' sheet.share_token %}">
+                    {% if sheet.get_first_image %}
+                    <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                    {% else %}
+                    <div class="sheet-thumbnail sheet-thumbnail-empty">
+                        <span>暂无图片</span>
+                    </div>
+                    {% endif %}
+                </a>
                 <div class="sheet-info">
-                    <h3>{{ sheet.title }}</h3>
+                    <h3><a href="{% url 'shared_sheet' sheet.share_token %}">{{ sheet.title }}</a></h3>
+                    {% if sheet.images.count > 1 %}
+                    <span class="page-count-badge">{{ sheet.images.count }} 页</span>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p style="text-align: center; color: #718096;">该分类下暂无曲谱</p>
+        <p style="text-align: center; color: #718096;">
+            {% if search_query %}未找到匹配的曲谱{% else %}该分类下暂无曲谱{% endif %}
+        </p>
         {% endif %}
     </main>
 </body>
