@@ -102,11 +102,12 @@ def category_detail(request, pk):
     is_member = request.user in category.members.all()
     is_owner = category.owner == request.user
     
-    sheets = GuitarSheet.objects.filter(category=category)
-    if not is_owner and not is_member:
-        sheets = GuitarSheet.objects.none()
+    if is_owner:
+        sheets = GuitarSheet.objects.filter(category=category)
+    elif is_member:
+        sheets = GuitarSheet.objects.filter(category=category, owner=request.user)
     else:
-        sheets = sheets.filter(owner=request.user)
+        sheets = GuitarSheet.objects.none()
 
     search_query = request.GET.get('search')
     if search_query:
