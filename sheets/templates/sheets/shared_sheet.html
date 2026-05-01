@@ -5,29 +5,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ sheet.title }} - 共享曲谱</title>
     <link rel="stylesheet" href="/static/sheets/css/style.css">
+    <style>
+        .thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .thumbnail-item {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .thumbnail-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .thumbnail-item img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            display: block;
+        }
+        .thumbnail-label {
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #4a5568;
+            background: #f7fafc;
+        }
+        .viewer-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .viewer-overlay.active {
+            display: flex;
+        }
+        .viewer-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 10;
+            background: rgba(0,0,0,0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+        }
+        .viewer-close:hover {
+            background: rgba(0,0,0,0.7);
+        }
+        .viewer-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            font-size: 2.5rem;
+            cursor: pointer;
+            background: rgba(0,0,0,0.4);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: background 0.2s;
+        }
+        .viewer-nav:hover {
+            background: rgba(0,0,0,0.7);
+        }
+        .viewer-prev { left: 20px; }
+        .viewer-next { right: 20px; }
+        .viewer-img-container {
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .viewer-img-container img {
+            max-width: 90vw;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        .viewer-info {
+            color: #fff;
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .viewer-page-label {
+            font-size: 1rem;
+        }
+        .viewer-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.5rem 1rem;
+            background: #48bb78;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .viewer-download:hover {
+            background: #38a169;
+        }
+    </style>
 </head>
 <body class="shared-view">
     <nav class="navbar navbar-shared">
         <div class="container">
             <a href="/" class="logo">🎸 吉他曲谱</a>
-            <span class="shared-badge">共享曲谱</span>
+            <span class="shared-badge">共享曲谱：{{ sheet.title }}</span>
         </div>
     </nav>
 
     <main class="container shared-container">
         <h1>{{ sheet.title }}</h1>
         {% if sheet.category %}
-        <p class="sheet-category">分类：{{ sheet.category.name }}</p>
+        <p class="sheet-category" style="color: #718096; margin-bottom: 1.5rem;">分类：{{ sheet.category.name }}</p>
         {% endif %}
 
         {% if images %}
-        <div class="sheet-images-container">
+        <p style="color: #718096; margin-bottom: 0.5rem;">共 {{ images|length }} 页，点击缩略图放大查看</p>
+        <div class="thumbnail-grid">
             {% for img in images %}
-            <div class="sheet-image-item">
-                <img src="{{ img.image.url }}" alt="{{ sheet.title }} - 第{{ forloop.counter }}页" class="sheet-full-image">
-                <div class="image-actions">
-                    <span class="page-label">第 {{ forloop.counter }} 页</span>
-                </div>
+            <div class="thumbnail-item" onclick="openViewer({{ forloop.counter0 }})">
+                <img src="{{ img.image.url }}" alt="第{{ forloop.counter }}页">
+                <div class="thumbnail-label">第 {{ forloop.counter }} 页</div>
             </div>
             {% endfor %}
         </div>
@@ -35,7 +161,73 @@
         <p style="text-align: center; color: #718096;">该曲谱暂无图片</p>
         {% endif %}
 
-        <p class="shared-footer">此曲谱由 <strong>{{ sheet.owner.username }}</strong> 分享</p>
+        <p class="shared-footer" style="margin-top: 2rem; color: #718096;">此曲谱由 <strong>{{ sheet.owner.username }}</strong> 分享</p>
     </main>
+
+    <div class="viewer-overlay" id="viewerOverlay">
+        <button class="viewer-close" onclick="closeViewer()">&times;</button>
+        <button class="viewer-nav viewer-prev" id="viewerPrev" onclick="viewerNavigate(-1)">&#8249;</button>
+        <button class="viewer-nav viewer-next" id="viewerNext" onclick="viewerNavigate(1)">&#8250;</button>
+        <div class="viewer-img-container">
+            <img id="viewerImg" src="" alt="">
+        </div>
+        <div class="viewer-info">
+            <span class="viewer-page-label" id="viewerPageLabel"></span>
+            <a class="viewer-download" id="viewerDownload" href="" download>
+                ⬇ 下载图片
+            </a>
+        </div>
+    </div>
+
+    <script>
+        var imageData = [];
+        {% for img in images %}
+        imageData.push({
+            url: '{{ img.image.url }}',
+            label: '第 {{ forloop.counter }} 页 / 共 {{ images|length }} 页'
+        });
+        {% endfor %}
+
+        var currentIndex = 0;
+
+        function openViewer(index) {
+            currentIndex = index;
+            updateViewer();
+            document.getElementById('viewerOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeViewer() {
+            document.getElementById('viewerOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function viewerNavigate(direction) {
+            currentIndex += direction;
+            if (currentIndex < 0) currentIndex = imageData.length - 1;
+            if (currentIndex >= imageData.length) currentIndex = 0;
+            updateViewer();
+        }
+
+        function updateViewer() {
+            var data = imageData[currentIndex];
+            document.getElementById('viewerImg').src = data.url;
+            document.getElementById('viewerPageLabel').textContent = data.label;
+            document.getElementById('viewerDownload').href = data.url;
+            document.getElementById('viewerPrev').style.display = imageData.length > 1 ? 'flex' : 'none';
+            document.getElementById('viewerNext').style.display = imageData.length > 1 ? 'flex' : 'none';
+        }
+
+        document.getElementById('viewerOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeViewer();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (!document.getElementById('viewerOverlay').classList.contains('active')) return;
+            if (e.key === 'Escape') closeViewer();
+            if (e.key === 'ArrowLeft') viewerNavigate(-1);
+            if (e.key === 'ArrowRight') viewerNavigate(1);
+        });
+    </script>
 </body>
 </html>
