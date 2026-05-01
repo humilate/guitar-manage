@@ -375,10 +375,13 @@ def shared_category(request, token):
     if search_query:
         sheets = sheets.filter(title__icontains=search_query)
 
+    is_member = request.user.is_authenticated and category.members.filter(id=request.user.id).exists()
+
     context = {
         'category': category,
         'sheets': sheets,
         'search_query': search_query,
+        'is_member': is_member,
     }
     return render(request, 'sheets/shared_category.html', context)
 
