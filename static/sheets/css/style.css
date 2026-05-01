@@ -15,9 +15,9 @@ body {
 }
 
 .container {
-    max-width: 95%;
+    max-width: 98%;
     margin: 0 auto;
-    padding: 0 30px;
+    padding: 0 20px;
 }
 
 .navbar {
@@ -43,24 +43,27 @@ body {
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 .nav-links a {
     color: white;
     text-decoration: none;
-    padding: 0.5rem 1.25rem;
-    border-radius: 5px;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
     transition: all 0.3s;
-    font-weight: 500;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.3);
+    font-weight: 600;
+    font-size: 1.05rem;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .nav-links a:hover {
-    background: rgba(255,255,255,0.3);
-    border-color: rgba(255,255,255,0.5);
-    transform: translateY(-1px);
+    background: rgba(255,255,255,0.4);
+    border-color: rgba(255,255,255,0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .username {
