@@ -89,6 +89,10 @@ def category_detail(request, pk):
     category = get_object_or_404(Category, pk=pk, owner=request.user)
     sheets = GuitarSheet.objects.filter(owner=request.user, category=category)
 
+    search_query = request.GET.get('search')
+    if search_query:
+        sheets = sheets.filter(title__icontains=search_query)
+
     paginator = Paginator(sheets, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -96,7 +100,7 @@ def category_detail(request, pk):
     context = {
         'category': category,
         'page_obj': page_obj,
-        'current_category': str(pk),
+        'search_query': search_query,
     }
     return render(request, 'sheets/category_detail.html', context)
 
