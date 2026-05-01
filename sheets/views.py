@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
@@ -58,6 +59,10 @@ def logout_view(request):
     return redirect('login')
 
 
+def user_can_access_category(user, category):
+    return category.owner == user or category.members.filter(id=user.id).exists()
+
+
 @login_required
 def dashboard(request):
     categories = Category.objects.filter(owner=request.user)
@@ -90,8 +95,15 @@ def dashboard(request):
 
 @login_required
 def category_detail(request, pk):
-    category = get_object_or_404(Category, pk=pk, owner=request.user)
-    sheets = GuitarSheet.objects.filter(owner=request.user, category=category)
+    category = get_object_or_404(Category, pk=pk)
+    if not user_can_access_category(request.user, category):
+        raise Http404
+    
+    sheets = GuitarSheet.objects.filter(category=category)
+    if category.owner == request.user or request.user in category.members.all():
+        sheets = sheets.filter(owner__in=[request.user])
+    else:
+        sheets = GuitarSheet.objects.none()
 
     search_query = request.GET.get('search')
     if search_query:
@@ -427,7 +439,9 @@ def batch_delete(request):
 
 @login_required
 def category_batch_update(request, pk):
-    category = get_object_or_404(Category, pk=pk, owner=request.user)
+    category = get_object_or_404(Category, pk=pk)
+    if not user_can_access_category(request.user, category):
+        raise Http404
     
     if request.method == 'POST':
         target_category_id = request.POST.get('category_id')
@@ -438,7 +452,7 @@ def category_batch_update(request, pk):
             target_category = get_object_or_404(Category, pk=target_category_id, owner=request.user)
         
         if mode == 'all':
-            sheets = GuitarSheet.objects.filter(owner=request.user, category=category)
+            sheets = GuitarSheet.objects.filter(category=category, owner=request.user)
             updated = sheets.update(category=target_category)
         else:
             sheet_ids = request.POST.getlist('sheet_ids')
@@ -447,7 +461,7 @@ def category_batch_update(request, pk):
                 return redirect('category_detail', pk=pk)
             
             updated = 0
-            for sheet in GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user):
+            for sheet in GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user, category=category):
                 sheet.category = target_category
                 sheet.save()
                 updated += 1
@@ -462,13 +476,15 @@ def category_batch_update(request, pk):
 
 @login_required
 def category_batch_delete(request, pk):
-    category = get_object_or_404(Category, pk=pk, owner=request.user)
+    category = get_object_or_404(Category, pk=pk)
+    if not user_can_access_category(request.user, category):
+        raise Http404
     
     if request.method == 'POST':
         mode = request.POST.get('mode', 'selected')
         
         if mode == 'all':
-            sheets = GuitarSheet.objects.filter(owner=request.user, category=category)
+            sheets = GuitarSheet.objects.filter(category=category, owner=request.user)
             deleted, _ = sheets.delete()
         else:
             sheet_ids = request.POST.getlist('sheet_ids')
@@ -476,7 +492,7 @@ def category_batch_delete(request, pk):
                 messages.warning(request, '请选择要删除的曲谱')
                 return redirect('category_detail', pk=pk)
             
-            deleted, _ = GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user).delete()
+            deleted, _ = GuitarSheet.objects.filter(pk__in=sheet_ids, owner=request.user, category=category).delete()
         
         if deleted > 0:
             messages.success(request, f'成功删除 {deleted} 首曲谱')
@@ -484,3 +500,37 @@ def category_batch_delete(request, pk):
             messages.warning(request, '没有曲谱被删除')
         
         return redirect('category_detail', pk=pk)
+
+
+@login_required
+def manage_category_members(request, pk):
+    category = get_object_or_404(Category, pk=pk, owner=request.user)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        username = request.POST.get('username')
+        
+        if action == 'add':
+            try:
+                user_to_add = User.objects.get(username=username)
+                if user_to_add == request.user:
+                    messages.warning(request, '不能添加自己')
+                elif category.members.filter(id=user_to_add.id).exists():
+                    messages.warning(request, '该用户已是成员')
+                else:
+                    category.members.add(user_to_add)
+                    messages.success(request, f'成功添加成员 {username}')
+            except User.DoesNotExist:
+                messages.error(request, '用户不存在')
+        elif action == 'remove':
+            user_id = request.POST.get('user_id')
+            user_to_remove = get_object_or_404(User, pk=user_id)
+            if category.members.filter(id=user_to_remove.id).exists():
+                category.members.remove(user_to_remove)
+                messages.success(request, f'已移除成员 {user_to_remove.username}')
+    
+    members = category.members.all()
+    return render(request, 'sheets/manage_members.html', {
+        'category': category,
+        'members': members,
+    })

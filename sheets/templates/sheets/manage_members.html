@@ -1,0 +1,58 @@
+{% extends 'sheets/base.html' %}
+
+{% block title %}管理成员 - {{ category.name }} - 吉他曲谱管理系统{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <div>
+            <a href="{% url 'category_detail' category.id %}" class="btn btn-outline" style="margin-bottom: 0.5rem;">&larr; 返回</a>
+            <h1>管理成员 - {{ category.name }}</h1>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" style="padding: 10px 15px; margin-bottom: 1rem; border-radius: 5px; background: {% if message.tags == 'error' %}#fed7d7{% elif message.tags == 'warning' %}#fefcbf{% else %}#c6f6d5{% endif %}; color: #2d3748;">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div style="background: #f7fafc; padding: 1.5rem; border-radius: 5px; margin-bottom: 1.5rem;">
+        <h3 style="margin-bottom: 1rem;">添加成员</h3>
+        <form method="post" style="display: flex; gap: 0.5rem; align-items: center;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add">
+            <input type="text" name="username" placeholder="输入用户名" required style="flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 5px;">
+            <button type="submit" class="btn btn-primary">添加</button>
+        </form>
+    </div>
+
+    <div style="background: #f7fafc; padding: 1.5rem; border-radius: 5px;">
+        <h3 style="margin-bottom: 1rem;">当前成员 ({{ members.count }})</h3>
+        {% if members %}
+        <div class="member-list">
+            {% for member in members %}
+            <div class="member-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                <div>
+                    <strong>{{ member.username }}</strong>
+                    {% if member.first_name %}
+                    <span style="color: #718096;">({{ member.first_name }} {{ member.last_name }})</span>
+                    {% endif %}
+                </div>
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove">
+                    <input type="hidden" name="user_id" value="{{ member.id }}">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定移除 {{ member.username }} 吗？')">移除</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: #718096;">暂无成员</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
