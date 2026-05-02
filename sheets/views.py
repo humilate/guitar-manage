@@ -138,10 +138,11 @@ def category_detail(request, pk):
     
     owned_categories = Category.objects.filter(owner=request.user).exclude(pk=pk)
     
-    all_cats = Category.objects.filter(owner=request.user).prefetch_related('sheets').order_by('name')
+    sheets = GuitarSheet.objects.filter(category=category)
+    
     categorized = {}
-    for cat in all_cats:
-        pinyin = lazy_pinyin(cat.name, style=Style.FIRST_LETTER)
+    for sheet in sheets:
+        pinyin = lazy_pinyin(sheet.title, style=Style.FIRST_LETTER)
         first_letter = pinyin[0][0].upper() if pinyin and pinyin[0] else '#'
         if first_letter.isalpha():
             first_letter = first_letter.upper()
@@ -149,13 +150,11 @@ def category_detail(request, pk):
             first_letter = '#'
         if first_letter not in categorized:
             categorized[first_letter] = []
-        categorized[first_letter].append(cat)
+        categorized[first_letter].append(sheet)
     
     sorted_letters = sorted(categorized.keys())
     all_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'
     letter_groups = [(letter, categorized.get(letter, [])) for letter in sorted_letters]
-    
-    sheets = GuitarSheet.objects.filter(category=category)
 
     search_query = request.GET.get('search')
     if search_query:

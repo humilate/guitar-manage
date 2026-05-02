@@ -146,9 +146,9 @@
             <div class="letter-section" id="catalog-letter-{{ group.0 }}">
                 <h4 class="letter-title">{{ group.0 }}</h4>
                 <div class="category-links">
-                    {% for cat in group.1 %}
-                    <a href="{% url 'category_detail' cat.id %}" class="category-link {% if cat.id == category.id %}current{% endif %}">
-                        {{ cat.name }}<span class="count">{{ cat.sheets.count }}</span>
+                    {% for sheet in group.1 %}
+                    <a href="{% url 'sheet_detail' sheet.id %}" class="category-link">
+                        {{ sheet.title }}<span class="count">{{ sheet.images.count }}页</span>
                     </a>
                     {% endfor %}
                 </div>
