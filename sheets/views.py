@@ -97,6 +97,18 @@ def dashboard(request):
 
 
 @login_required
+def catalog(request):
+    categories = Category.objects.filter(owner=request.user).prefetch_related('sheets__images').order_by('name')
+    search_query = request.GET.get('search', '')
+    
+    context = {
+        'categories': categories,
+        'search_query': search_query,
+    }
+    return render(request, 'sheets/catalog.html', context)
+
+
+@login_required
 def category_detail(request, pk):
     category = get_object_or_404(Category, pk=pk)
     if not user_can_access_category(request.user, category):
