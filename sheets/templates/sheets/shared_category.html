@@ -11,9 +11,27 @@
         <div class="container">
             <a href="/" class="logo">🎸 吉他曲谱</a>
             <span class="shared-badge">共享分类：{{ category.name }}</span>
-            <a href="{% url 'category_detail' category.id %}" class="btn btn-sm btn-outline">进入分类管理</a>
+            <a href="{% url 'category_detail' category.id %}" class="btn btn-nav-manage">进入分类管理</a>
         </div>
     </nav>
+
+    <style>
+        .btn-nav-manage {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-nav-manage:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.8);
+        }
+    </style>
 
     <main class="container shared-container">
         <h1>{{ category.name }}</h1>

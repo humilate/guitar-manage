@@ -182,10 +182,30 @@
         <div class="container">
             <a href="/" class="logo">🎸 吉他曲谱</a>
             <span class="shared-badge">共享曲谱：{{ sheet.title }}</span>
+            <style>
+                .btn-nav-back {
+                    background: rgba(255,255,255,0.2);
+                    color: #fff;
+                    border: 1px solid rgba(255,255,255,0.5);
+                    padding: 0.4rem 1rem;
+                    border-radius: 20px;
+                    font-size: 0.85rem;
+                    text-decoration: none;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                }
+                .btn-nav-back:hover {
+                    background: rgba(255,255,255,0.3);
+                    border-color: rgba(255,255,255,0.8);
+                }
+            </style>
             {% if sheet.category %}
-            <a href="{% url 'shared_category' sheet.category.share_token %}" class="btn btn-sm btn-outline">&larr; 返回分类</a>
+            <a href="{% url 'shared_category' sheet.category.share_token %}" class="btn-nav-back">&larr; 返回分类</a>
             {% else %}
-            <a href="/" class="btn btn-sm btn-outline">&larr; 返回首页</a>
+            <a href="/" class="btn-nav-back">&larr; 返回首页</a>
             {% endif %}
         </div>
     </nav>
