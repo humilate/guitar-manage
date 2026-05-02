@@ -577,8 +577,11 @@ def sheet_detail(request, pk):
     if sheet.owner != request.user:
         if not sheet.category or not user_can_access_category(request.user, sheet.category):
             raise Http404
-    images = sheet.images.all()
-    return render(request, 'sheets/sheet_detail.html', {'sheet': sheet, 'images': images})
+    images = sheet.images.all().order_by('page_number')
+    
+    progress = PracticeProgress.objects.filter(user=request.user, sheet=sheet).first()
+
+    return render(request, 'sheets/sheet_detail.html', {'sheet': sheet, 'images': images, 'progress': progress})
 
 
 @login_required
