@@ -179,7 +179,6 @@ def category_detail(request, pk):
         'page_obj': page_obj,
         'sheets': page_obj,
         'search_query': search_query,
-        'sort_by': sort_by,
         'is_owner': is_owner,
         'is_member': is_member,
         'is_shared': category.is_shared,
