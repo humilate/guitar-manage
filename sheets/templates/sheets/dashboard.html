@@ -14,9 +14,13 @@
     </div>
 
     <div class="search-bar">
-        <form method="get" class="search-form">
-            <input type="text" name="search" placeholder="搜索曲谱..." value="{{ search_query|default:'' }}">
+        <form method="get" class="search-form" id="searchForm">
+            <input type="text" name="search" placeholder="搜索曲谱..." value="{{ search_query|default:'' }}" id="searchInput" autocomplete="off">
+            <span class="search-result-count" id="searchResultCount" style="display: none; align-self: center; color: #667eea; font-size: 0.85rem; font-weight: 500; white-space: nowrap;"></span>
             <button type="submit" class="btn btn-primary">搜索</button>
+            {% if search_query %}
+            <a href="{% url 'dashboard' %}" class="btn btn-outline">清除</a>
+            {% endif %}
         </form>
     </div>
 
@@ -70,7 +74,7 @@
             {% for sheet in sheets %}
             <div class="sheet-card" style="position: relative;">
                 <input type="checkbox" name="sheet_ids" value="{{ sheet.id }}" class="sheet-checkbox" style="position: absolute; top: 10px; left: 10px; z-index: 2; width: 20px; height: 20px; cursor: pointer;">
-                <a href="{% url 'sheet_detail' sheet.id %}">
+                <a href="{% url 'sheet_detail' sheet.id %}" class="sheet-card-thumb-wrap">
                     {% if sheet.get_first_image %}
                     <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22%3E%3Crect width=%22300%22 height=%22200%22 fill=%22%23f7fafc%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23a0aec0%22 font-size=%2214%22%3E%E5%8A%A0%E8%BD%BD%E5%A4%B1%E8%B4%A5%3C/text%3E%3C/svg%3E';">
                     {% else %}
@@ -78,6 +82,13 @@
                         <span>暂无图片</span>
                     </div>
                     {% endif %}
+                    <div class="hover-overlay">
+                        <span>{{ sheet.title }}</span>
+                        {% if sheet.images.count > 1 %}
+                        <span>{{ sheet.images.count }} 页</span>
+                        {% endif %}
+                        <span class="hover-view-hint">点击查看</span>
+                    </div>
                 </a>
                 <div class="sheet-info">
                     <h3><a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a></h3>
@@ -92,15 +103,10 @@
                     {% endif %}
                 </div>
                 <div class="sheet-actions">
-                    <a href="{% url 'sheet_detail' sheet.id %}" class="btn btn-sm">查看</a>
-                    <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-sm btn-outline">编辑</a>
-                    {% if sheet.is_shared %}
-                    <input type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'shared_sheet' sheet.share_token %}" readonly class="share-link" onclick="this.select()">
-                    {% endif %}
-                    <a href="{% url 'toggle_share' sheet.id %}" class="btn btn-sm {% if sheet.is_shared %}btn-warning{% else %}btn-success{% endif %}">
-                        {% if sheet.is_shared %}取消共享{% else %}共享{% endif %}
-                    </a>
-                    <a href="{% url 'delete_sheet' sheet.id %}" class="btn btn-sm btn-danger">删除</a>
+                    <a href="{% url 'sheet_detail' sheet.id %}" class="btn btn-sm btn-view">查看</a>
+                    <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-sm btn-action">编辑</a>
+                    <a href="{% url 'toggle_share' sheet.id %}" class="btn btn-sm btn-action">{% if sheet.is_shared %}共享中{% else %}分享{% endif %}</a>
+                    <a href="{% url 'delete_sheet' sheet.id %}" class="btn btn-sm btn-action-danger">删除</a>
                 </div>
             </div>
             {% endfor %}
@@ -170,6 +176,53 @@
 </div>
 
 <script>
+(function() {
+    var searchInput = document.getElementById('searchInput');
+    var searchResultCount = document.getElementById('searchResultCount');
+    if (!searchInput) return;
+
+    var cards = document.querySelectorAll('.sheet-card');
+    var batchActions = document.querySelector('.batch-actions');
+    var emptyState = document.querySelector('.empty-state');
+    var pagination = document.querySelector('.pagination');
+
+    function doFilter() {
+        var term = searchInput.value.toLowerCase().trim();
+        var visibleCount = 0;
+        cards.forEach(function(card) {
+            var title = (card.querySelector('.sheet-info h3 a') || {}).textContent || '';
+            var category = (card.querySelector('.category-badge') || {}).textContent || '';
+            var matched = !term || title.toLowerCase().indexOf(term) >= 0 || category.toLowerCase().indexOf(term) >= 0;
+            card.style.display = matched ? '' : 'none';
+            if (matched) visibleCount++;
+        });
+        if (term) {
+            searchResultCount.style.display = '';
+            searchResultCount.textContent = '找到 ' + visibleCount + ' 首';
+            searchResultCount.style.color = visibleCount > 0 ? '#667eea' : '#e53e3e';
+        } else {
+            searchResultCount.style.display = 'none';
+        }
+        if (batchActions) batchActions.style.display = term ? 'none' : '';
+        if (pagination) pagination.style.display = term ? 'none' : '';
+        if (emptyState && term && visibleCount === 0) {
+            emptyState.style.display = '';
+        } else if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+    }
+
+    var timer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(doFilter, 300);
+    });
+
+    if (searchInput.value.trim()) {
+        doFilter();
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('.sheet-checkbox');
     const selectedCount = document.getElementById('selectedCount');

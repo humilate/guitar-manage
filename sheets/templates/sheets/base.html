@@ -6,9 +6,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}吉他曲谱管理系统{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'sheets/css/style.css' %}">
+    <style>
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 400px;
+        }
+        .toast {
+            padding: 0.85rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+            animation: toastSlideIn 0.35s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 1;
+            transition: opacity 0.3s, transform 0.3s;
+            word-break: break-word;
+        }
+        .toast.toast-hiding {
+            opacity: 0;
+            transform: translateX(80px);
+        }
+        .toast-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #38a169;
+        }
+        .toast-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #e53e3e;
+        }
+        .toast-info {
+            background: #bee3f8;
+            color: #2a4365;
+            border-left: 4px solid #3182ce;
+        }
+        .toast-warning {
+            background: #feebc8;
+            color: #7b341e;
+            border-left: 4px solid #dd6b20;
+        }
+        @keyframes toastSlideIn {
+            from { opacity: 0; transform: translateX(80px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <div class="toast-container" id="toastContainer"></div>
+
     <nav class="navbar">
         <div class="container">
             <a href="{% url 'dashboard' %}" class="logo">🎸 吉他曲谱管理</a>
@@ -26,16 +82,6 @@
     </nav>
 
     <main class="container page-transition">
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}" id="msg-{{ forloop.counter }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
         {% block content %}{% endblock %}
     </main>
 
@@ -48,16 +94,26 @@
     {% if messages %}
     <script>
         window.addEventListener('DOMContentLoaded', function() {
-            var alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
+            var container = document.getElementById('toastContainer');
+            {% for message in messages %}
+            (function() {
+                var toast = document.createElement('div');
+                toast.className = 'toast toast-{{ message.tags }}';
+                var iconMap = {
+                    'success': '✅',
+                    'error': '❌',
+                    'warning': '⚠️',
+                    'info': 'ℹ️'
+                };
+                var icon = iconMap['{{ message.tags }}'] || '';
+                toast.innerHTML = '<span>' + icon + '</span><span>{{ message|escapejs }}</span>';
+                container.appendChild(toast);
                 setTimeout(function() {
-                    alert.style.transition = 'opacity 0.3s';
-                    alert.style.opacity = '0';
-                    setTimeout(function() {
-                        alert.style.display = 'none';
-                    }, 300);
-                }, 3000);
-            });
+                    toast.classList.add('toast-hiding');
+                    setTimeout(function() { toast.remove(); }, 300);
+                }, 3500);
+            })();
+            {% endfor %}
         });
     </script>
     {% endif %}
