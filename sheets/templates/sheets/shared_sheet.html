@@ -182,6 +182,11 @@
         <div class="container">
             <a href="/" class="logo">🎸 吉他曲谱</a>
             <span class="shared-badge">共享曲谱：{{ sheet.title }}</span>
+            {% if sheet.category %}
+            <a href="{% url 'shared_category' sheet.category.share_token %}" class="btn btn-sm btn-outline">&larr; 返回分类</a>
+            {% else %}
+            <a href="/" class="btn btn-sm btn-outline">&larr; 返回首页</a>
+            {% endif %}
         </div>
     </nav>
 
