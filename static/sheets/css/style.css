@@ -947,9 +947,24 @@ body {
     }
 
     .sheet-detail-header {
-        flex-direction: column;
-        gap: 0.75rem;
-        align-items: flex-start;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+
+    .sheet-detail-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+
+    .sheet-detail-actions .btn-back {
+        margin-left: auto;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .sheet-detail h1 {
