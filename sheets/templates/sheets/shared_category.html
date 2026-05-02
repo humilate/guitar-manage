@@ -5,6 +5,146 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ category.name }} - 共享曲谱分类</title>
     <link rel="stylesheet" href="/static/sheets/css/style.css">
+    <style>
+        .viewer-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .viewer-overlay.active {
+            display: flex;
+        }
+        .viewer-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 10;
+            background: rgba(0,0,0,0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+        }
+        .viewer-close:hover {
+            background: rgba(0,0,0,0.7);
+        }
+        .viewer-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            font-size: 2.5rem;
+            cursor: pointer;
+            background: rgba(0,0,0,0.4);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: background 0.2s;
+        }
+        .viewer-nav:hover {
+            background: rgba(0,0,0,0.7);
+        }
+        .viewer-prev { left: 20px; }
+        .viewer-next { right: 20px; }
+        .viewer-img-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            width: 85vw;
+            height: 80vh;
+            overflow: hidden;
+            position: relative;
+        }
+        .viewer-img-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+            transform-origin: center center;
+            transition: transform 0.15s ease-out;
+            cursor: grab;
+        }
+        .viewer-img-container img.zoomed {
+            cursor: move;
+        }
+        .zoom-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 5;
+        }
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .zoom-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .zoom-level {
+            color: #fff;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+            min-width: 50px;
+            text-align: center;
+        }
+        .viewer-info {
+            color: #fff;
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .viewer-page-label {
+            font-size: 1rem;
+        }
+        .viewer-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.5rem 1rem;
+            background: #48bb78;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .viewer-download:hover {
+            background: #38a169;
+        }
+    </style>
 </head>
 <body class="shared-view">
     <nav class="navbar navbar-shared">
@@ -48,7 +188,7 @@
         <div class="sheet-grid">
             {% for sheet in sheets %}
             <div class="sheet-card">
-                <a href="{% url 'shared_sheet' sheet.share_token %}">
+                <a href="javascript:void(0)" onclick="openSheetViewer('{{ sheet.share_token }}')">
                     {% if sheet.get_first_image %}
                     <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22%3E%3Crect width=%22300%22 height=%22200%22 fill=%22%23f7fafc%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23a0aec0%22 font-size=%2214%22%3E%E5%8A%A0%E8%BD%BD%E5%A4%B1%E8%B4%A5%3C/text%3E%3C/svg%3E';">
                     {% else %}
@@ -58,7 +198,7 @@
                     {% endif %}
                 </a>
                 <div class="sheet-info">
-                    <h3><a href="{% url 'shared_sheet' sheet.share_token %}">{{ sheet.title }}</a></h3>
+                    <h3><a href="javascript:void(0)" onclick="openSheetViewer('{{ sheet.share_token }}')">{{ sheet.title }}</a></h3>
                     {% if sheet.images.count > 1 %}
                     <span class="page-count-badge">{{ sheet.images.count }} 页</span>
                     {% endif %}
@@ -85,5 +225,188 @@
         </p>
         {% endif %}
     </main>
+
+    <div class="viewer-overlay" id="viewerOverlay">
+        <button class="viewer-close" onclick="closeViewer()">&times;</button>
+        <button class="viewer-nav viewer-prev" id="viewerPrev" onclick="viewerNavigate(-1)">&#8249;</button>
+        <button class="viewer-nav viewer-next" id="viewerNext" onclick="viewerNavigate(1)">&#8250;</button>
+        <div class="viewer-img-container">
+            <img id="viewerImg" src="" alt="">
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomIn()" title="放大">+</button>
+                <span class="zoom-level" id="zoomLevel">100%</span>
+                <button class="zoom-btn" onclick="zoomOut()" title="缩小">−</button>
+                <button class="zoom-btn" onclick="resetZoom()" title="重置" style="font-size:0.85rem;"></button>
+            </div>
+        </div>
+        <div class="viewer-info">
+            <span class="viewer-page-label" id="viewerPageLabel"></span>
+            <a class="viewer-download" id="viewerDownload" href="" download>
+                ⬇ 下载图片
+            </a>
+        </div>
+    </div>
+
+    <script>
+        var sheetData = {};
+        {% for sheet in sheets %}
+        sheetData['{{ sheet.share_token }}'] = {
+            images: [
+                {% for img in sheet.images.all %}
+                {
+                    url: '{{ img.image.url }}',
+                    label: '第 {{ forloop.counter }} 页 / 共 {{ sheet.images.count }} 页'
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+        };
+        {% endfor %}
+
+        var currentImages = [];
+        var currentIndex = 0;
+        var currentZoom = 1;
+
+        function openSheetViewer(shareToken) {
+            var sheet = sheetData[shareToken];
+            if (!sheet || !sheet.images || sheet.images.length === 0) {
+                alert('该曲谱暂无图片');
+                return;
+            }
+            currentImages = sheet.images;
+            currentIndex = 0;
+            currentZoom = 1;
+            updateViewer();
+            updateZoomLevel();
+            document.getElementById('viewerOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeViewer() {
+            document.getElementById('viewerOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+            currentZoom = 1;
+            updateZoomLevel();
+        }
+
+        function viewerNavigate(direction) {
+            currentIndex += direction;
+            if (currentIndex < 0) currentIndex = currentImages.length - 1;
+            if (currentIndex >= currentImages.length) currentIndex = 0;
+            currentZoom = 1;
+            updateViewer();
+            updateZoomLevel();
+        }
+
+        function updateViewer() {
+            var data = currentImages[currentIndex];
+            document.getElementById('viewerImg').src = data.url;
+            document.getElementById('viewerPageLabel').textContent = data.label;
+            document.getElementById('viewerDownload').href = data.url;
+            document.getElementById('viewerPrev').style.display = currentImages.length > 1 ? 'flex' : 'none';
+            document.getElementById('viewerNext').style.display = currentImages.length > 1 ? 'flex' : 'none';
+            applyZoom();
+        }
+
+        function applyZoom() {
+            var img = document.getElementById('viewerImg');
+            img.style.transform = 'scale(' + currentZoom + ')';
+            if (currentZoom > 1) {
+                img.classList.add('zoomed');
+            } else {
+                img.classList.remove('zoomed');
+            }
+        }
+
+        function updateZoomLevel() {
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom + 0.25, 5);
+            applyZoom();
+            updateZoomLevel();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom - 0.25, 0.25);
+            applyZoom();
+            updateZoomLevel();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            applyZoom();
+            updateZoomLevel();
+        }
+
+        var viewerImg = document.getElementById('viewerImg');
+        var viewerContainer = document.querySelector('.viewer-img-container');
+
+        if (viewerContainer) {
+            viewerContainer.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    currentZoom = Math.min(currentZoom + 0.15, 5);
+                } else {
+                    currentZoom = Math.max(currentZoom - 0.15, 0.25);
+                }
+                applyZoom();
+                updateZoomLevel();
+            }, { passive: false });
+        }
+
+        var isDragging = false;
+        var startX, startY, offsetX = 0, offsetY = 0;
+
+        viewerImg.addEventListener('mousedown', function(e) {
+            if (currentZoom <= 1) return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            var transform = viewerImg.style.transform;
+            var match = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/);
+            if (match) {
+                offsetX = parseFloat(match[1]);
+                offsetY = parseFloat(match[2]);
+            } else {
+                offsetX = 0;
+                offsetY = 0;
+            }
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            var dx = e.clientX - startX;
+            var dy = e.clientY - startY;
+            viewerImg.style.transform = 'scale(' + currentZoom + ') translate(' + (offsetX + dx) + 'px, ' + (offsetY + dy) + 'px)';
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                var transform = viewerImg.style.transform;
+                var match = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/);
+                if (match) {
+                    offsetX = parseFloat(match[1]);
+                    offsetY = parseFloat(match[2]);
+                }
+            }
+        });
+
+        document.getElementById('viewerOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeViewer();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (!document.getElementById('viewerOverlay').classList.contains('active')) return;
+            if (e.key === 'Escape') closeViewer();
+            if (e.key === 'ArrowLeft') viewerNavigate(-1);
+            if (e.key === 'ArrowRight') viewerNavigate(1);
+            if (e.key === '+' || e.key === '=') zoomIn();
+            if (e.key === '-') zoomOut();
+            if (e.key === '0') resetZoom();
+        });
+    </script>
 </body>
 </html>

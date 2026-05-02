@@ -168,11 +168,7 @@ def category_detail(request, pk):
     if search_query:
         sheets_qs = sheets_qs.filter(title__icontains=search_query)
 
-    sort_by = request.GET.get('sort', '-created_at')
-    valid_sorts = {'name': 'title', '-name': '-title', 'created': 'created_at', '-created': '-created_at', 'pages': None, '-pages': None}
-    if sort_by in valid_sorts:
-        if valid_sorts[sort_by]:
-            sheets_qs = sheets_qs.order_by(valid_sorts[sort_by])
+    sheets_qs = sheets_qs.order_by('-created_at')
 
     paginator = Paginator(sheets_qs.select_related('owner', 'category'), 12)
     page_number = request.GET.get('page')
