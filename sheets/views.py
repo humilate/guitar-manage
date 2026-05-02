@@ -13,6 +13,7 @@ from django.db import transaction
 from django.db.models import Q
 from .models import GuitarSheet, Category, SheetImage
 from .forms import UserRegisterForm, GuitarSheetForm, CategoryForm
+from pypinyin import lazy_pinyin, Style
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +102,26 @@ def catalog(request):
     categories = Category.objects.filter(owner=request.user).prefetch_related('sheets__images').order_by('name')
     search_query = request.GET.get('search', '')
     
+    categorized = {}
+    for cat in categories:
+        pinyin = lazy_pinyin(cat.name, style=Style.FIRST_LETTER)
+        first_letter = pinyin[0][0].upper() if pinyin and pinyin[0] else '#'
+        if first_letter.isalpha():
+            first_letter = first_letter.upper()
+        else:
+            first_letter = '#'
+        if first_letter not in categorized:
+            categorized[first_letter] = []
+        categorized[first_letter].append(cat)
+    
+    sorted_letters = sorted(categorized.keys())
+    all_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'
+    letter_groups = [(letter, categorized.get(letter, [])) for letter in sorted_letters]
+    
     context = {
-        'categories': categories,
+        'letter_groups': letter_groups,
+        'sorted_letters': sorted_letters,
+        'all_letters': all_letters,
         'search_query': search_query,
     }
     return render(request, 'sheets/catalog.html', context)
@@ -118,6 +137,23 @@ def category_detail(request, pk):
     is_owner = category.owner == request.user
     
     owned_categories = Category.objects.filter(owner=request.user).exclude(pk=pk)
+    
+    all_cats = Category.objects.filter(owner=request.user).prefetch_related('sheets').order_by('name')
+    categorized = {}
+    for cat in all_cats:
+        pinyin = lazy_pinyin(cat.name, style=Style.FIRST_LETTER)
+        first_letter = pinyin[0][0].upper() if pinyin and pinyin[0] else '#'
+        if first_letter.isalpha():
+            first_letter = first_letter.upper()
+        else:
+            first_letter = '#'
+        if first_letter not in categorized:
+            categorized[first_letter] = []
+        categorized[first_letter].append(cat)
+    
+    sorted_letters = sorted(categorized.keys())
+    all_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'
+    letter_groups = [(letter, categorized.get(letter, [])) for letter in sorted_letters]
     
     sheets = GuitarSheet.objects.filter(category=category)
 
@@ -138,6 +174,9 @@ def category_detail(request, pk):
         'is_member': is_member,
         'is_shared': category.is_shared,
         'owned_categories': owned_categories,
+        'letter_groups': letter_groups,
+        'all_letters': all_letters,
+        'sorted_letters': sorted_letters,
     }
     return render(request, 'sheets/category_detail.html', context)
 

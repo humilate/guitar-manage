@@ -3,7 +3,161 @@
 {% block title %}{{ category.name }} - 吉他曲谱管理系统{% endblock %}
 
 {% block content %}
+<style>
+    .catalog-panel {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .catalog-panel h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+        color: #2d3748;
+    }
+    .catalog-panel .alpha-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        background: #f7fafc;
+        border-radius: 6px;
+    }
+    .catalog-panel .alpha-nav a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        color: #4a5568;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .catalog-panel .alpha-nav a:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    .catalog-panel .alpha-nav a.has-items {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    .catalog-panel .alpha-nav a.current {
+        background: #f56565;
+        color: white;
+        border-color: #f56565;
+    }
+    .catalog-panel .letter-section {
+        margin-bottom: 1rem;
+    }
+    .catalog-panel .letter-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #4a5568;
+        padding-bottom: 0.3rem;
+        margin-bottom: 0.5rem;
+        border-bottom: 2px solid #667eea;
+    }
+    .catalog-panel .letter-section.hidden {
+        display: none;
+    }
+    .catalog-panel .category-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+    .catalog-panel .category-link {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        color: #4a5568;
+        text-decoration: none;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    .catalog-panel .category-link:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    .catalog-panel .category-link.current {
+        background: #edf2f7;
+        color: #667eea;
+        border-color: #667eea;
+        font-weight: 500;
+    }
+    .catalog-panel .category-link .count {
+        color: #a0aec0;
+        font-size: 0.7rem;
+        margin-left: 0.2rem;
+    }
+    .catalog-toggle {
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .catalog-toggle .arrow {
+        transition: transform 0.3s;
+        font-size: 0.8rem;
+    }
+    .catalog-toggle.expanded .arrow {
+        transform: rotate(180deg);
+    }
+    .catalog-body {
+        display: none;
+        margin-top: 1rem;
+    }
+    .catalog-body.expanded {
+        display: block;
+    }
+</style>
+
 <div class="dashboard">
+    <div class="catalog-panel">
+        <div class="catalog-toggle" onclick="toggleCatalog()">
+            <h3>📚 目录</h3>
+            <span class="arrow">▼</span>
+            <span style="font-size:0.8rem; color:#718096;">点击展开/收起</span>
+        </div>
+        <div class="catalog-body" id="catalogBody">
+            {% if letter_groups %}
+            <div class="alpha-nav">
+                {% for letter in all_letters %}
+                {% if letter in sorted_letters %}
+                <a href="#catalog-letter-{{ letter }}" class="has-items">{{ letter }}</a>
+                {% else %}
+                <a href="#catalog-letter-{{ letter }}">{{ letter }}</a>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% for group in letter_groups %}
+            <div class="letter-section" id="catalog-letter-{{ group.0 }}">
+                <h4 class="letter-title">{{ group.0 }}</h4>
+                <div class="category-links">
+                    {% for cat in group.1 %}
+                    <a href="{% url 'category_detail' cat.id %}" class="category-link {% if cat.id == category.id %}current{% endif %}">
+                        {{ cat.name }}<span class="count">{{ cat.sheets.count }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
     <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
         <div>
             <h1>{{ category.name }}</h1>
@@ -127,6 +281,13 @@
 </div>
 
 <script>
+function toggleCatalog() {
+    var toggle = document.querySelector('.catalog-toggle');
+    var body = document.getElementById('catalogBody');
+    toggle.classList.toggle('expanded');
+    body.classList.toggle('expanded');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('.sheet-checkbox');
     const selectedCount = document.getElementById('selectedCount');

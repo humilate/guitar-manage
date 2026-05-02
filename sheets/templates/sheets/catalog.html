@@ -16,7 +16,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         padding-bottom: 1rem;
         border-bottom: 2px solid #f7fafc;
     }
@@ -35,14 +35,63 @@
         font-size: 0.9rem;
         width: 200px;
     }
-    .catalog-category {
+    .alpha-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
         margin-bottom: 1.5rem;
+        padding: 0.75rem;
+        background: #f7fafc;
+        border-radius: 8px;
+    }
+    .alpha-nav a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 5px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        color: #4a5568;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .alpha-nav a:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    .alpha-nav a.has-items {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    .alpha-nav a.has-items:hover {
+        background: #5568d8;
+    }
+    .letter-section {
+        margin-bottom: 1.5rem;
+        scroll-margin-top: 80px;
+    }
+    .letter-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2d3748;
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+    }
+    .catalog-category {
+        margin-bottom: 0.75rem;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
         overflow: hidden;
     }
     .category-header {
-        padding: 1rem 1.5rem;
+        padding: 0.75rem 1rem;
         background: #f7fafc;
         cursor: pointer;
         display: flex;
@@ -55,11 +104,11 @@
     }
     .category-header h3 {
         margin: 0;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     .category-header .meta {
         color: #718096;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
     .category-header .arrow {
         transition: transform 0.3s;
@@ -70,7 +119,7 @@
     }
     .category-sheets {
         display: none;
-        padding: 0 1.5rem;
+        padding: 0 1rem;
     }
     .category-sheets.expanded {
         display: block;
@@ -81,7 +130,7 @@
         margin: 0;
     }
     .sheet-list li {
-        padding: 0.75rem 0;
+        padding: 0.6rem 0;
         border-bottom: 1px solid #f7fafc;
         display: flex;
         justify-content: space-between;
@@ -93,14 +142,14 @@
     .sheet-list li a {
         color: #2d3748;
         text-decoration: none;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
     .sheet-list li a:hover {
         color: #667eea;
     }
     .sheet-list li .page-count {
         color: #a0aec0;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
     .empty-state {
         text-align: center;
@@ -118,30 +167,47 @@
         </div>
     </div>
 
-    {% if categories %}
-    {% for category in categories %}
-    <div class="catalog-category" data-category-name="{{ category.name }}">
-        <div class="category-header {% if category.sheets.all|length > 0 %}expanded{% endif %}" onclick="toggleCategory(this)">
-            <div>
-                <h3>{{ category.name }}</h3>
-                <span class="meta">{{ category.sheets.count }} 首曲谱</span>
+    {% if sorted_letters %}
+    <div class="alpha-nav">
+        {% for letter in all_letters %}
+        {% if letter in sorted_letters %}
+        <a href="#letter-{{ letter }}" class="has-items">{{ letter }}</a>
+        {% else %}
+        <a href="#letter-{{ letter }}">{{ letter }}</a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if letter_groups %}
+    {% for group in letter_groups %}
+    <div class="letter-section" id="letter-{{ group.0 }}">
+        <h2 class="letter-title">{{ group.0 }}</h2>
+        {% for category in group.1 %}
+        <div class="catalog-category" data-category-name="{{ category.name }}">
+            <div class="category-header" onclick="toggleCategory(this)">
+                <div>
+                    <h3>{{ category.name }}</h3>
+                    <span class="meta">{{ category.sheets.count }} 首曲谱</span>
+                </div>
+                <span class="arrow">▼</span>
             </div>
-            <span class="arrow">▼</span>
+            <div class="category-sheets">
+                {% if category.sheets.all %}
+                <ul class="sheet-list">
+                    {% for sheet in category.sheets.all %}
+                    <li>
+                        <a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a>
+                        <span class="page-count">{{ sheet.images.count }} 页</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">暂无曲谱</div>
+                {% endif %}
+            </div>
         </div>
-        <div class="category-sheets {% if category.sheets.all|length > 0 %}expanded{% endif %}">
-            {% if category.sheets.all %}
-            <ul class="sheet-list">
-                {% for sheet in category.sheets.all %}
-                <li>
-                    <a href="{% url 'sheet_detail' sheet.id %}">{{ sheet.title }}</a>
-                    <span class="page-count">{{ sheet.images.count }} 页</span>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <div class="empty-state">暂无曲谱</div>
-            {% endif %}
-        </div>
+        {% endfor %}
     </div>
     {% endfor %}
     {% else %}
@@ -161,6 +227,8 @@
     function searchCatalog() {
         var query = document.getElementById('searchInput').value.toLowerCase();
         var categories = document.querySelectorAll('.catalog-category');
+        var letterSections = document.querySelectorAll('.letter-section');
+        
         categories.forEach(function(cat) {
             var name = cat.dataset.categoryName.toLowerCase();
             var sheets = cat.querySelectorAll('.sheet-list li');
@@ -181,6 +249,15 @@
                 header.classList.add('expanded');
                 content.classList.add('expanded');
             }
+        });
+
+        letterSections.forEach(function(section) {
+            var visibleCats = section.querySelectorAll('.catalog-category[style=""], .catalog-category:not([style])');
+            var allHidden = true;
+            section.querySelectorAll('.catalog-category').forEach(function(cat) {
+                if (cat.style.display !== 'none') allHidden = false;
+            });
+            section.style.display = allHidden && query ? 'none' : '';
         });
     }
 
