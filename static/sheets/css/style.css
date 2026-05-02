@@ -807,15 +807,16 @@ body {
         width: 100%;
     }
 
+    .dashboard-header > .category-actions,
     .dashboard-header > div:last-child {
-        width: 100%;
+        width: 100% !important;
         display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
     }
 
     .dashboard-header .btn {
-        width: 100%;
+        width: 100% !important;
         text-align: center;
         white-space: nowrap;
         font-size: 0.85rem;

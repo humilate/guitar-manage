@@ -162,7 +162,7 @@
         <div>
             <h1>{{ category.name }}</h1>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <div class="category-actions" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <a href="{% url 'dashboard' %}" class="btn btn-outline">&larr; 返回</a>
             <a href="{% url 'add_sheet' %}?category={{ category.id }}" class="btn btn-outline">上传曲谱</a>
             {% if is_owner %}
