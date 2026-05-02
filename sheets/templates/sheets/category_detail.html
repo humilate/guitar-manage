@@ -193,9 +193,8 @@
     {% endif %}
 
     <div class="search-bar">
-        <form method="get" class="search-form" id="searchForm">
-            <input type="text" name="search" placeholder="在此分类中搜索曲谱..." value="{{ search_query|default:'' }}" id="searchInput" autocomplete="off">
-            <span class="search-result-count" id="searchResultCount" style="display: none; align-self: center; color: #667eea; font-size: 0.85rem; font-weight: 500; white-space: nowrap;"></span>
+        <form method="get" class="search-form">
+            <input type="text" name="search" placeholder="在此分类中搜索曲谱..." value="{{ search_query|default:'' }}">
             <button type="submit" class="btn btn-primary">搜索</button>
             {% if search_query %}
             <a href="{% url 'category_detail' category.id %}" class="btn btn-outline">清除搜索</a>
@@ -290,46 +289,6 @@
 </div>
 
 <script>
-(function() {
-    var searchInput = document.getElementById('searchInput');
-    var searchResultCount = document.getElementById('searchResultCount');
-    if (!searchInput) return;
-
-    var cards = document.querySelectorAll('.sheet-card');
-    var batchActions = document.querySelector('.batch-actions');
-    var pagination = document.querySelector('.pagination');
-
-    function doFilter() {
-        var term = searchInput.value.toLowerCase().trim();
-        var visibleCount = 0;
-        cards.forEach(function(card) {
-            var title = (card.querySelector('.sheet-info h3 a') || {}).textContent || '';
-            var matched = !term || title.toLowerCase().indexOf(term) >= 0;
-            card.style.display = matched ? '' : 'none';
-            if (matched) visibleCount++;
-        });
-        if (term) {
-            searchResultCount.style.display = '';
-            searchResultCount.textContent = '找到 ' + visibleCount + ' 首';
-            searchResultCount.style.color = visibleCount > 0 ? '#667eea' : '#e53e3e';
-        } else {
-            searchResultCount.style.display = 'none';
-        }
-        if (batchActions) batchActions.style.display = term ? 'none' : '';
-        if (pagination) pagination.style.display = term ? 'none' : '';
-    }
-
-    var timer;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(timer);
-        timer = setTimeout(doFilter, 300);
-    });
-
-    if (searchInput.value.trim()) {
-        doFilter();
-    }
-})();
-
 function toggleCatalog() {
     var toggle = document.querySelector('.catalog-toggle');
     var body = document.getElementById('catalogBody');

@@ -53,9 +53,8 @@
         {% endif %}
 
         <div class="search-bar" style="margin-bottom: 2rem;">
-            <form method="get" class="search-form" id="searchForm">
-                <input type="text" name="search" placeholder="搜索曲谱..." value="{{ search_query|default:'' }}" id="searchInput" autocomplete="off">
-                <span class="search-result-count" id="searchResultCount" style="display: none; align-self: center; color: #667eea; font-size: 0.85rem; font-weight: 500; white-space: nowrap;"></span>
+            <form method="get" class="search-form">
+                <input type="text" name="search" placeholder="搜索曲谱..." value="{{ search_query|default:'' }}">
                 <button type="submit" class="btn btn-primary">搜索</button>
                 {% if search_query %}
                 <a href="{{ request.path }}" class="btn btn-outline">清除</a>
@@ -111,45 +110,5 @@
         </p>
         {% endif %}
     </main>
-
-    <script>
-        (function() {
-            var searchInput = document.getElementById('searchInput');
-            var searchResultCount = document.getElementById('searchResultCount');
-            if (!searchInput) return;
-
-            var cards = document.querySelectorAll('.sheet-card');
-            var pagination = document.querySelector('.pagination');
-
-            function doFilter() {
-                var term = searchInput.value.toLowerCase().trim();
-                var visibleCount = 0;
-                cards.forEach(function(card) {
-                    var title = (card.querySelector('.sheet-info h3 a') || {}).textContent || '';
-                    var matched = !term || title.toLowerCase().indexOf(term) >= 0;
-                    card.style.display = matched ? '' : 'none';
-                    if (matched) visibleCount++;
-                });
-                if (term) {
-                    searchResultCount.style.display = '';
-                    searchResultCount.textContent = '找到 ' + visibleCount + ' 首';
-                    searchResultCount.style.color = visibleCount > 0 ? '#667eea' : '#e53e3e';
-                } else {
-                    searchResultCount.style.display = 'none';
-                }
-                if (pagination) pagination.style.display = term ? 'none' : '';
-            }
-
-            var timer;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(timer);
-                timer = setTimeout(doFilter, 300);
-            });
-
-            if (searchInput.value.trim()) {
-                doFilter();
-            }
-        })();
-    </script>
 </body>
 </html>

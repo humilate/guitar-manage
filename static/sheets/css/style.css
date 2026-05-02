@@ -373,6 +373,7 @@ body {
 .sheet-card-thumb-wrap {
     position: relative;
     overflow: hidden;
+    display: block;
 }
 
 .sheet-card-thumb-wrap .hover-overlay {
@@ -389,7 +390,8 @@ body {
     pointer-events: none;
 }
 
-.sheet-card:hover .hover-overlay {
+.sheet-card:hover .hover-overlay,
+.sheet-card-thumb-wrap:hover .hover-overlay {
     opacity: 1;
 }
 
