@@ -12,7 +12,7 @@
                 <li>将要上传的文件夹<strong>压缩成 ZIP 文件</strong></li>
                 <li>文件夹结构应为：<strong>分类名/曲谱名/图片.png</strong></li>
                 <li>例如：<code>流行歌曲/晴天/1.jpg</code></li>
-                <li>点击"选择 ZIP 文件"上传即可</li>
+                <li>选择文件或直接拖拽到下方区域上传</li>
             </ol>
         </div>
 
@@ -20,15 +20,12 @@
             {% csrf_token %}
             <div class="form-group">
                 <label for="id_zip_file">ZIP 压缩包</label>
-                <input type="file" name="zip_file" id="id_zip_file" accept=".zip" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 1rem;">
-                <small class="help-text">选择包含曲谱文件夹的 ZIP 压缩包</small>
-            </div>
-
-            <div id="uploadProgress" style="display: none; margin-bottom: 1rem;">
-                <div style="background: #e2e8f0; border-radius: 5px; overflow: hidden; height: 24px;">
-                    <div id="progressBar" style="background: #667eea; height: 100%; width: 0%; transition: width 0.3s; text-align: center; line-height: 24px; color: white; font-size: 0.8rem;"></div>
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-icon">📁</div>
+                    <p style="margin: 0; color: #4a5568; font-size: 0.95rem;">点击选择文件 或 拖拽 ZIP 文件到此处</p>
+                    <input type="file" name="zip_file" id="id_zip_file" accept=".zip" style="display: none;">
                 </div>
-                <p id="progressText" style="text-align: center; color: #718096; margin-top: 0.5rem; font-size: 0.9rem;"></p>
+                <div id="fileName" style="margin-top: 0.5rem; font-size: 0.85rem; color: #667eea; display: none;"></div>
             </div>
 
             <div class="form-actions">
@@ -39,20 +36,95 @@
     </div>
 </div>
 
-<script>
-document.getElementById('uploadForm').addEventListener('submit', function(e) {
-    var fileInput = document.getElementById('id_zip_file');
-    if (!fileInput.files || !fileInput.files[0]) {
-        e.preventDefault();
-        alert('请先选择 ZIP 文件');
-        return;
-    }
+<div class="upload-loading-overlay" id="uploadLoading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="uploadLoadingText">正在上传，请稍候...</div>
+    <div class="loading-progress-bar">
+        <div class="loading-progress-fill" id="uploadProgressFill"></div>
+    </div>
+</div>
 
-    document.getElementById('uploadProgress').style.display = 'block';
-    document.getElementById('progressText').textContent = '正在上传，请稍候...';
-    document.getElementById('progressBar').style.width = '30%';
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('submitBtn').textContent = '上传中...';
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dropZone = document.getElementById('dropZone');
+    var fileInput = document.getElementById('id_zip_file');
+    var fileName = document.getElementById('fileName');
+    var uploadForm = document.getElementById('uploadForm');
+    var submitBtn = document.getElementById('submitBtn');
+    var uploadLoading = document.getElementById('uploadLoading');
+    var uploadLoadingText = document.getElementById('uploadLoadingText');
+    var uploadProgressFill = document.getElementById('uploadProgressFill');
+
+    if (!dropZone || !fileInput) return;
+
+    dropZone.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files && fileInput.files[0]) {
+            var file = fileInput.files[0];
+            var name = file.name;
+            var size = (file.size / 1024 / 1024).toFixed(2);
+            fileName.textContent = '已选择: ' + name + ' (' + size + ' MB)';
+            fileName.style.display = '';
+            dropZone.style.borderColor = '#48bb78';
+            dropZone.style.background = '#f0fff4';
+        }
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        var files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].name.endsWith('.zip')) {
+            fileInput.files = files;
+            var file = files[0];
+            var size = (file.size / 1024 / 1024).toFixed(2);
+            fileName.textContent = '已选择: ' + file.name + ' (' + size + ' MB)';
+            fileName.style.display = '';
+            dropZone.style.borderColor = '#48bb78';
+            dropZone.style.background = '#f0fff4';
+        }
+    });
+
+    uploadForm.addEventListener('submit', function(e) {
+        if (!fileInput.files || !fileInput.files[0]) {
+            e.preventDefault();
+            alert('请先选择 ZIP 文件');
+            return;
+        }
+
+        uploadLoading.classList.add('active');
+        uploadLoadingText.textContent = '正在上传，请稍候...';
+        uploadProgressFill.style.width = '0%';
+        submitBtn.disabled = true;
+        submitBtn.textContent = '上传中...';
+
+        var progress = 0;
+        var interval = setInterval(function() {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90;
+            uploadProgressFill.style.width = progress + '%';
+            if (progress >= 60) {
+                uploadLoadingText.textContent = '正在处理文件...';
+            }
+            if (progress >= 80) {
+                uploadLoadingText.textContent = '正在保存到数据库...';
+            }
+        }, 400);
+
+        uploadForm.dataset.interval = interval;
+    });
 });
 </script>
 {% endblock %}

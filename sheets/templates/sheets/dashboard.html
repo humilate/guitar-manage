@@ -66,10 +66,11 @@
     {% if sheets %}
     <form method="post" id="actionForm">
         {% csrf_token %}
-        <div class="sheet-grid">
+        <div class="sheet-grid" id="sheetGrid">
             {% for sheet in sheets %}
-            <div class="sheet-card" style="position: relative;">
-                <input type="checkbox" name="sheet_ids" value="{{ sheet.id }}" class="sheet-checkbox" style="position: absolute; top: 10px; left: 10px; z-index: 2; width: 20px; height: 20px; cursor: pointer;">
+            <div class="sheet-card sortable-item" style="position: relative;" data-sheet-id="{{ sheet.id }}">
+                <span class="drag-handle" title="拖拽排序">⠿</span>
+                <input type="checkbox" name="sheet_ids" value="{{ sheet.id }}" class="sheet-checkbox" style="position: absolute; top: 10px; left: 38px; z-index: 2; width: 20px; height: 20px; cursor: pointer;">
                 <a href="{% url 'sheet_detail' sheet.id %}" class="sheet-card-thumb-wrap">
                     {% if sheet.get_first_image %}
                     <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22%3E%3Crect width=%22300%22 height=%22200%22 fill=%22%23f7fafc%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23a0aec0%22 font-size=%2214%22%3E%E5%8A%A0%E8%BD%BD%E5%A4%B1%E8%B4%A5%3C/text%3E%3C/svg%3E';">
@@ -137,18 +138,21 @@
         {% if categories %}
         <div class="category-list" style="margin-top: 1rem;">
             {% for category in categories %}
-            <div class="category-list-item" style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="flex: 1;">
-                    <a href="{% url 'category_detail' category.id %}" style="text-decoration: none; color: inherit;">
-                        <strong>{{ category.name }}</strong>
-                    </a>
-                    {% if category.owner != request.user %}
-                    <span style="font-size: 0.7rem; color: #4299e1;">(成员)</span>
-                    {% endif %}
-                    {% if category.is_shared %}
-                    <span class="share-badge">已共享</span>
-                    {% endif %}
-                    <p style="font-size: 0.875rem; color: #718096; margin-top: 0.25rem;">{{ category.sheets.count }} 首曲谱</p>
+            <div class="category-list-item sortable-item" style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" data-cat-id="{{ category.id }}">
+                <div style="flex: 1; display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="drag-handle" title="拖拽排序">⠿</span>
+                    <div>
+                        <a href="{% url 'category_detail' category.id %}" style="text-decoration: none; color: inherit;">
+                            <strong>{{ category.name }}</strong>
+                        </a>
+                        {% if category.owner != request.user %}
+                        <span style="font-size: 0.7rem; color: #4299e1;">(成员)</span>
+                        {% endif %}
+                        {% if category.is_shared %}
+                        <span class="share-badge">已共享</span>
+                        {% endif %}
+                        <p style="font-size: 0.875rem; color: #718096; margin-top: 0.25rem;">{{ category.sheets.count }} 首曲谱</p>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     {% if category.is_shared %}
@@ -277,6 +281,56 @@ document.addEventListener('DOMContentLoaded', function() {
             form.submit();
         });
     }
+
+    initDragSort('.sheet-grid');
+    initDragSort('.category-list');
 });
+
+function initDragSort(containerSelector) {
+    var container = document.querySelector(containerSelector);
+    if (!container) return;
+
+    var dragged = null;
+    var dragStartY = 0;
+
+    container.addEventListener('mousedown', function(e) {
+        var handle = e.target.closest('.drag-handle');
+        if (!handle) return;
+        var item = handle.closest('.sortable-item');
+        if (!item) return;
+        e.preventDefault();
+        dragged = item;
+        dragged.classList.add('dragging');
+        dragStartY = e.clientY;
+    });
+
+    container.addEventListener('mousemove', function(e) {
+        if (!dragged) return;
+        var items = Array.from(container.querySelectorAll('.sortable-item'));
+        var idx = items.indexOf(dragged);
+        if (idx < 0) return;
+
+        for (var i = 0; i < items.length; i++) {
+            if (items[i] === dragged) continue;
+            var rect = items[i].getBoundingClientRect();
+            var midY = rect.top + rect.height / 2;
+            if (Math.abs(e.clientY - midY) < 20) {
+                var insertBefore = e.clientY < midY;
+                if (insertBefore && i < items.length - 1) {
+                    container.insertBefore(dragged, items[i]);
+                } else if (!insertBefore && i > 0) {
+                    container.insertBefore(dragged, items[i].nextSibling);
+                }
+                break;
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragged) return;
+        dragged.classList.remove('dragging');
+        dragged = null;
+    });
+}
 </script>
 {% endblock %}
