@@ -171,16 +171,19 @@
 
     {% if images %}
     <div class="sheet-images-container">
-        {% for img in images %}
-        <div class="sheet-image-item">
-            <img src="{{ img.image.url }}" alt="{{ sheet.title }} - 第{{ forloop.counter }}页" class="sheet-full-image" onclick="openViewer({{ forloop.counter0 }})">
-            <div class="image-actions">
-                <span class="page-label">第 {{ forloop.counter }} 页 <span style="font-size:0.75rem; color:#a0aec0;">(点击放大)</span></span>
-                <a href="{% url 'delete_image' img.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定删除这张图片吗？')">删除</a>
+            {% for img in images %}
+            <div class="sheet-image-item">
+                <img src="{{ img.image.url }}" alt="{{ sheet.title }} - 第{{ forloop.counter }}页" class="sheet-full-image" onclick="openViewer({{ forloop.counter0 }})" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.querySelector('.img-fallback').style.display='flex';">
+                <div class="image-actions">
+                    <span class="page-label">第 {{ forloop.counter }} 页 <span style="font-size:0.75rem; color:#a0aec0;">(点击放大)</span></span>
+                    <a href="{% url 'delete_image' img.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定删除这张图片吗？')">删除</a>
+                </div>
+                <div class="img-fallback" style="display:none; width:100%; height:200px; background:#f7fafc; border-radius:5px; align-items:center; justify-content:center; color:#a0aec0; font-size:0.9rem;">
+                    <span>图片加载失败</span>
+                </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
     {% else %}
     <p style="text-align: center; color: #718096;">该曲谱暂无图片</p>
     {% endif %}

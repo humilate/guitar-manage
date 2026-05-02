@@ -196,7 +196,7 @@
         <div class="thumbnail-grid">
             {% for img in images %}
             <div class="thumbnail-item" onclick="openViewer({{ forloop.counter0 }})">
-                <img src="{{ img.image.url }}" alt="第{{ forloop.counter }}页">
+                <img src="{{ img.image.url }}" alt="第{{ forloop.counter }}页" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22150%22%3E%3Crect width=%22200%22 height=%22150%22 fill=%22%23f7fafc%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23a0aec0%22 font-size=%2214%22%3E%E5%8A%A0%E8%BD%BD%E5%A4%B1%E8%B4%A5%3C/text%3E%3C/svg%3E';">
                 <div class="thumbnail-label">第 {{ forloop.counter }} 页</div>
             </div>
             {% endfor %}

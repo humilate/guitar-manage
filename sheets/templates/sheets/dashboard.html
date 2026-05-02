@@ -72,7 +72,7 @@
                 <input type="checkbox" name="sheet_ids" value="{{ sheet.id }}" class="sheet-checkbox" style="position: absolute; top: 10px; left: 10px; z-index: 2; width: 20px; height: 20px; cursor: pointer;">
                 <a href="{% url 'sheet_detail' sheet.id %}">
                     {% if sheet.get_first_image %}
-                    <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                    <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22%3E%3Crect width=%22300%22 height=%22200%22 fill=%22%23f7fafc%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23a0aec0%22 font-size=%2214%22%3E%E5%8A%A0%E8%BD%BD%E5%A4%B1%E8%B4%A5%3C/text%3E%3C/svg%3E';">
                     {% else %}
                     <div class="sheet-thumbnail sheet-thumbnail-empty">
                         <span>暂无图片</span>

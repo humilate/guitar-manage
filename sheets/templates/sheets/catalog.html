@@ -225,7 +225,12 @@
     }
 
     function searchCatalog() {
-        var query = document.getElementById('searchInput').value.toLowerCase();
+        var query = document.getElementById('searchInput').value.toLowerCase().trim();
+        if (!query) {
+            document.querySelectorAll('.catalog-category').forEach(c => c.style.display = '');
+            document.querySelectorAll('.letter-section').forEach(s => s.style.display = '');
+            return;
+        }
         var categories = document.querySelectorAll('.catalog-category');
         var letterSections = document.querySelectorAll('.letter-section');
         
@@ -233,17 +238,19 @@
             var name = cat.dataset.categoryName.toLowerCase();
             var sheets = cat.querySelectorAll('.sheet-list li');
             var match = false;
+            var hasVisibleSheet = false;
             sheets.forEach(function(sheet) {
                 var title = sheet.querySelector('a').textContent.toLowerCase();
                 if (title.includes(query) || name.includes(query)) {
                     sheet.style.display = '';
                     match = true;
+                    hasVisibleSheet = true;
                 } else {
                     sheet.style.display = 'none';
                 }
             });
             cat.style.display = match || name.includes(query) ? '' : 'none';
-            if (query && match) {
+            if (match || name.includes(query)) {
                 var header = cat.querySelector('.category-header');
                 var content = cat.querySelector('.category-sheets');
                 header.classList.add('expanded');
@@ -252,17 +259,19 @@
         });
 
         letterSections.forEach(function(section) {
-            var visibleCats = section.querySelectorAll('.catalog-category[style=""], .catalog-category:not([style])');
-            var allHidden = true;
+            var anyVisible = false;
             section.querySelectorAll('.catalog-category').forEach(function(cat) {
-                if (cat.style.display !== 'none') allHidden = false;
+                if (cat.style.display !== 'none') anyVisible = true;
             });
-            section.style.display = allHidden && query ? 'none' : '';
+            section.style.display = anyVisible ? '' : 'none';
         });
     }
 
     document.getElementById('searchInput').addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
+            searchCatalog();
+        }
+        if (this.value.trim() === '') {
             searchCatalog();
         }
     });

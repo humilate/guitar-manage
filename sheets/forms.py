@@ -4,6 +4,9 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import GuitarSheet, Category
 
+ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True, label='邮箱')

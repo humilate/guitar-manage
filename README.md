@@ -15,6 +15,7 @@
 - **文件夹上传**：支持批量上传 ZIP 文件夹，自动按文件夹名创建分类
 - **高清图片查看**：点击曲谱图片可放大查看，支持鼠标滚轮缩放（25% - 500%）、拖动平移、键盘快捷键操作
 - **图片下载**：在放大查看模式下可直接下载高清曲谱图片
+- **拼音目录**：分类详情页面集成按曲谱名称拼音首字母（A-Z）分类的目录，支持字母导航快速定位
 - **响应式设计**：适配桌面和移动设备
 - **后台管理**：Django Admin 管理用户和内容
 - **页面动画**：平滑的页面切换和卡片加载动画
@@ -40,18 +41,32 @@
 - 在查看器中点击右下角下载按钮可保存当前页图片
 - 支持右键另存为功能
 
+## 拼音目录功能
+
+### 使用方式
+1. 进入任意分类详情页面
+2. 点击顶部的"📚 目录"展开目录面板
+3. 通过字母导航（A-Z/#）快速定位到目标曲谱
+4. 点击曲谱名称直接跳转到曲谱详情页
+
+### 技术实现
+- 使用 `pypinyin` 库获取曲谱名称的拼音首字母
+- 曲谱按拼音首字母分组显示（A-Z，非中文开头的归入 #）
+- 支持展开/收起目录面板
+
 ## 技术栈
 
 - **后端**：Python + Django 5.0.6
 - **数据库**：SQLite（默认）
 - **前端**：HTML + CSS + JavaScript（原生）
 - **图片处理**：Pillow
+- **拼音处理**：pypinyin
 
 ## 项目结构
 
 ```
 guitar-manage/
-── guitar_sheet_project/       # Django 项目配置目录
+├── guitar_sheet_project/       # Django 项目配置目录
 │   ├── settings.py             # 项目核心配置
 │   ├── urls.py                 # 主 URL 路由配置
 │   └── wsgi.py                 # WSGI 服务器入口
@@ -63,13 +78,14 @@ guitar-manage/
 │   ├── urls.py                 # 应用 URL 路由配置
 │   └── templates/sheets/       # HTML 模板文件
 │
-── static/sheets/css/          # 静态文件
+├── static/sheets/css/          # 静态文件
 │   └── style.css               # 全局样式表
 │
-└── media/                      # 用户上传的曲谱图片存储目录
-── manage.py                   # Django 项目管理脚本
-── requirements.txt            # Python 依赖包列表
-└── README.md                   # 项目说明文档
+├── media/                      # 用户上传的曲谱图片存储目录
+├── manage.py                   # Django 项目管理脚本
+├── requirements.txt            # Python 依赖包列表
+├── README.md                   # 项目说明文档
+└── AI_PROJECT_CONTEXT.md       # AI 辅助开发文档
 ```
 
 ## 安装运行
@@ -153,6 +169,12 @@ python manage.py runserver
 - 在搜索框输入曲谱名称或分类名称
 - 点击"搜索"按钮
 
+### 使用拼音目录
+1. 进入分类详情页面
+2. 点击顶部"📚 目录"展开
+3. 通过字母导航定位曲谱
+4. 点击曲谱名称查看详情
+
 ## URL 路由
 
 | URL | 说明 | 需要登录 |
@@ -168,7 +190,7 @@ python manage.py runserver
 | `/sheets/sheet/<id>/share/` | 切换共享状态 | 是 |
 | `/sheets/shared/<token>/` | 查看共享曲谱 | 否 |
 | `/sheets/category/add/` | 创建分类 | 是 |
-| `/sheets/category/<id>/` | 分类详情 | 是 |
+| `/sheets/category/<id>/` | 分类详情（含拼音目录） | 是 |
 | `/sheets/category/<id>/edit/` | 编辑分类 | 是 |
 | `/sheets/category/<id>/delete/` | 删除分类 | 是 |
 | `/sheets/category/<id>/share/` | 切换分类共享状态 | 是 |
@@ -214,13 +236,14 @@ python manage.py runserver
 | 操作 | 所有者 | 成员 | 其他人 |
 |------|--------|------|--------|
 | 查看分类 | ✅ | ✅ | ❌ |
-| 上传曲谱 | ✅ | ✅ |  |
+| 上传曲谱 | ✅ | ✅ | ❌ |
 | 编辑自己的曲谱 | ✅ | ✅ | ❌ |
 | 删除自己的曲谱 | ✅ | ✅ | ❌ |
-| 编辑他人曲谱 | ✅ | ❌ |  |
+| 编辑他人曲谱 | ✅ | ❌ | ❌ |
 | 删除他人曲谱 | ✅ | ❌ | ❌ |
 | 管理成员 | ✅ | ❌ | ❌ |
 | 共享分类 | ✅ | ❌ | ❌ |
+| 批量操作 | ✅ | ✅（仅自己） | ❌ |
 
 ## 部署
 
@@ -234,7 +257,27 @@ python manage.py migrate
 
 然后在 Web 页面点击 **Reload** 重新加载应用。
 
+### 注意事项
+- PythonAnywhere 虚拟环境需要安装 `pypinyin`：`pip install pypinyin`
+- 重载应用：`touch guitar_sheet_project/wsgi.py`
+
 ## 更新日志
+
+### v1.7.0 (2024)
+- 修复目录页面搜索不准确问题（同时搜索分类名和曲谱名）
+- 修复成员权限边界问题（区分所有者和成员的操作按钮）
+- 添加图片加载失败友好提示（所有页面统一显示占位图）
+- 添加文件类型白名单验证（仅支持 JPG、PNG、WebP、GIF）
+- 添加文件大小限制（单张图片 10MB，ZIP 文件 100MB）
+- 添加图片懒加载优化（loading="lazy" 属性）
+- 添加数据库索引优化查询（常用字段添加 db_index 和复合索引）
+- 优化 prefetch_related 和 select_related 减少数据库查询
+
+### v1.6.0 (2024)
+- 在分类详情页面集成拼音首字母目录功能
+- 支持按曲谱名称拼音首字母（A-Z）分类显示
+- 字母导航快速定位曲谱
+- 点击曲谱名称直接跳转详情页
 
 ### v1.5.0 (2024)
 - 添加高清图片查看器功能

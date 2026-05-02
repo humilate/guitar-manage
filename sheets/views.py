@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
 from .models import GuitarSheet, Category, SheetImage
-from .forms import UserRegisterForm, GuitarSheetForm, CategoryForm
+from .forms import UserRegisterForm, GuitarSheetForm, CategoryForm, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE
 from pypinyin import lazy_pinyin, Style
 
 logger = logging.getLogger(__name__)
@@ -185,16 +185,26 @@ def add_sheet(request):
     if request.method == 'POST':
         form = GuitarSheetForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
-            sheet = form.save(commit=False)
-            sheet.owner = request.user
-            sheet.save()
-
             images = request.FILES.getlist('images')
-            if images:
+            allowed_types = set(ALLOWED_IMAGE_TYPES)
+            max_size = MAX_IMAGE_SIZE
+            errors = []
+            for img in images:
+                if img.content_type not in allowed_types:
+                    errors.append(f'{img.name}: 仅支持 JPG、PNG、WebP、GIF 格式')
+                elif img.size > max_size:
+                    errors.append(f'{img.name}: 文件大小不能超过 10MB')
+            if errors:
+                for err in errors:
+                    form.add_error(None, err)
+            else:
+                sheet = form.save(commit=False)
+                sheet.owner = request.user
+                sheet.save()
                 for i, img in enumerate(images):
                     SheetImage.objects.create(sheet=sheet, image=img, page_number=i)
-            messages.success(request, '曲谱上传成功！')
-            return redirect('dashboard')
+                messages.success(request, '曲谱上传成功！')
+                return redirect('dashboard')
     else:
         form = GuitarSheetForm(user=request.user)
 
@@ -224,6 +234,14 @@ def upload_folder(request):
         zip_file = request.FILES.get('zip_file')
         if not zip_file:
             messages.error(request, '请选择 ZIP 文件')
+            return render(request, 'sheets/upload_folder.html', {'title': '文件夹上传'})
+
+        if not zip_file.name.endswith('.zip'):
+            messages.error(request, '仅支持 ZIP 格式文件')
+            return render(request, 'sheets/upload_folder.html', {'title': '文件夹上传'})
+
+        if zip_file.size > 100 * 1024 * 1024:
+            messages.error(request, 'ZIP 文件大小不能超过 100MB')
             return render(request, 'sheets/upload_folder.html', {'title': '文件夹上传'})
 
         uploaded_count = 0
@@ -429,7 +447,7 @@ def delete_image(request, pk):
 
 
 def shared_sheet(request, token):
-    sheet = get_object_or_404(GuitarSheet, share_token=token)
+    sheet = get_object_or_404(GuitarSheet.objects.select_related('category', 'owner'), share_token=token)
     if not sheet.is_shared and (not sheet.category or not sheet.category.is_shared):
         raise Http404
     images = sheet.images.all()
@@ -438,11 +456,11 @@ def shared_sheet(request, token):
 
 @login_required
 def shared_category(request, token):
-    category = get_object_or_404(Category, share_token=token, is_shared=True)
+    category = get_object_or_404(Category.objects.select_related('owner'), share_token=token, is_shared=True)
     if not user_can_access_category(request.user, category):
         raise Http404
     
-    sheets = GuitarSheet.objects.filter(category=category)
+    sheets = GuitarSheet.objects.filter(category=category).select_related('category', 'owner').prefetch_related('images')
 
     search_query = request.GET.get('search')
     if search_query:

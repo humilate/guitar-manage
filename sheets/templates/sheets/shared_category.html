@@ -24,7 +24,13 @@
 
         {% if is_member %}
         <div class="alert" style="background: #ebf8ff; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid #4299e1;">
-            <p style="color: #2c5282; margin: 0;">您是该分类的成员，可以<a href="{% url 'category_detail' category.id %}" style="color: #2b6cb0; text-decoration: underline;">点击此处</a>进入分类管理页面进行添加、编辑、删除操作。</p>
+            <p style="color: #2c5282; margin: 0;">您是该分类的成员，可以<a href="{% url 'category_detail' category.id %}" style="color: #2b6cb0; text-decoration: underline;">点击此处</a>进入分类管理页面。</p>
+        </div>
+        {% endif %}
+
+        {% if is_owner %}
+        <div style="margin-bottom: 1.5rem;">
+            <a href="{% url 'category_detail' category.id %}" class="btn btn-primary">进入分类管理</a>
         </div>
         {% endif %}
 
@@ -44,7 +50,7 @@
             <div class="sheet-card">
                 <a href="{% url 'shared_sheet' sheet.share_token %}">
                     {% if sheet.get_first_image %}
-                    <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail">
+                    <img src="{{ sheet.get_first_image.url }}" alt="{{ sheet.title }}" class="sheet-thumbnail" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22%3E%3Crect width=%22300%22 height=%22200%22 fill=%22%23f7fafc%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23a0aec0%22 font-size=%2214%22%3E%E5%8A%A0%E8%BD%BD%E5%A4%B1%E8%B4%A5%3C/text%3E%3C/svg%3E';">
                     {% else %}
                     <div class="sheet-thumbnail sheet-thumbnail-empty">
                         <span>暂无图片</span>
