@@ -390,9 +390,8 @@ body {
     pointer-events: none;
 }
 
-.sheet-card:hover .hover-overlay,
 .sheet-card-thumb-wrap:hover .hover-overlay {
-    opacity: 1;
+    opacity: 1 !important;
 }
 
 .hover-overlay span {
