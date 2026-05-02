@@ -1,21 +1,27 @@
 import os
 import zipfile
 import logging
+import io
+from PIL import Image as PILImage
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.core.files.base import ContentFile
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
-from .models import GuitarSheet, Category, SheetImage
+from .models import GuitarSheet, Category, SheetImage, PracticeProgress
 from .forms import UserRegisterForm, GuitarSheetForm, CategoryForm, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE
 from pypinyin import lazy_pinyin, Style
 
 logger = logging.getLogger(__name__)
+
+MAX_IMAGE_DIMENSION = 1920
+JPEG_QUALITY = 85
 
 
 def register_view(request):
@@ -138,10 +144,10 @@ def category_detail(request, pk):
     
     owned_categories = Category.objects.filter(owner=request.user).exclude(pk=pk)
     
-    sheets = GuitarSheet.objects.filter(category=category)
+    all_sheets = list(GuitarSheet.objects.filter(category=category))
     
     categorized = {}
-    for sheet in sheets:
+    for sheet in all_sheets:
         pinyin = lazy_pinyin(sheet.title, style=Style.FIRST_LETTER)
         first_letter = pinyin[0][0].upper() if pinyin and pinyin[0] else '#'
         if first_letter.isalpha():
@@ -156,11 +162,19 @@ def category_detail(request, pk):
     all_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'
     letter_groups = [(letter, categorized.get(letter, [])) for letter in sorted_letters]
 
+    sheets_qs = GuitarSheet.objects.filter(category=category)
+
     search_query = request.GET.get('search')
     if search_query:
-        sheets = sheets.filter(title__icontains=search_query)
+        sheets_qs = sheets_qs.filter(title__icontains=search_query)
 
-    paginator = Paginator(sheets.select_related('owner', 'category'), 12)
+    sort_by = request.GET.get('sort', '-created_at')
+    valid_sorts = {'name': 'title', '-name': '-title', 'created': 'created_at', '-created': '-created_at', 'pages': None, '-pages': None}
+    if sort_by in valid_sorts:
+        if valid_sorts[sort_by]:
+            sheets_qs = sheets_qs.order_by(valid_sorts[sort_by])
+
+    paginator = Paginator(sheets_qs.select_related('owner', 'category'), 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -169,6 +183,7 @@ def category_detail(request, pk):
         'page_obj': page_obj,
         'sheets': page_obj,
         'search_query': search_query,
+        'sort_by': sort_by,
         'is_owner': is_owner,
         'is_member': is_member,
         'is_shared': category.is_shared,
@@ -202,7 +217,24 @@ def add_sheet(request):
                 sheet.owner = request.user
                 sheet.save()
                 for i, img in enumerate(images):
-                    SheetImage.objects.create(sheet=sheet, image=img, page_number=i)
+                    img_file = img
+                    try:
+                        pil_img = PILImage.open(img)
+                        width, height = pil_img.size
+                        if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
+                            ratio = min(MAX_IMAGE_DIMENSION / width, MAX_IMAGE_DIMENSION / height)
+                            new_size = (int(width * ratio), int(height * ratio))
+                            pil_img = pil_img.resize(new_size, PILImage.LANCZOS)
+                        output = io.BytesIO()
+                        if pil_img.mode in ('RGBA', 'P'):
+                            pil_img = pil_img.convert('RGB')
+                        pil_img.save(output, format='JPEG', quality=JPEG_QUALITY, optimize=True)
+                        output.seek(0)
+                        new_filename = os.path.splitext(img.name)[0] + '.jpg'
+                        img_file = ContentFile(output.read(), name=new_filename)
+                    except Exception as e:
+                        logger.warning(f'图片压缩失败 {img.name}: {e}')
+                    SheetImage.objects.create(sheet=sheet, image=img_file, page_number=i)
                 messages.success(request, '曲谱上传成功！')
                 return redirect('dashboard')
     else:
@@ -288,6 +320,23 @@ def upload_folder(request):
 
                     try:
                         img_data = zf.read(info)
+                        img_file = ContentFile(img_data, name=img_filename)
+                        try:
+                            pil_img = PILImage.open(io.BytesIO(img_data))
+                            width, height = pil_img.size
+                            if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
+                                ratio = min(MAX_IMAGE_DIMENSION / width, MAX_IMAGE_DIMENSION / height)
+                                new_size = (int(width * ratio), int(height * ratio))
+                                pil_img = pil_img.resize(new_size, PILImage.LANCZOS)
+                            output = io.BytesIO()
+                            if pil_img.mode in ('RGBA', 'P'):
+                                pil_img = pil_img.convert('RGB')
+                            pil_img.save(output, format='JPEG', quality=JPEG_QUALITY, optimize=True)
+                            output.seek(0)
+                            new_filename = os.path.splitext(img_filename)[0] + '.jpg'
+                            img_file = ContentFile(output.read(), name=new_filename)
+                        except Exception as e:
+                            logger.warning(f'ZIP图片压缩失败 {img_filename}: {e}')
 
                         category, created_cat = Category.objects.get_or_create(
                             name=cat_name,
@@ -446,6 +495,44 @@ def delete_image(request, pk):
     return redirect('sheet_detail', pk=sheet_id)
 
 
+@login_required
+def export_sheet(request, pk):
+    sheet = get_object_or_404(GuitarSheet, pk=pk)
+    can_export = sheet.owner == request.user
+    if not can_export and sheet.category:
+        can_export = sheet.category.owner == request.user or sheet.category.members.filter(id=request.user.id).exists()
+    if not can_export:
+        raise Http404
+    images = sheet.images.all().order_by('page_number')
+    if not images:
+        messages.warning(request, '该曲谱暂无图片可导出')
+        return redirect('sheet_detail', pk=pk)
+    response = HttpResponse(content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="{sheet.title}.zip"'
+    with zipfile.ZipFile(response, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for img in images:
+            zf.write(img.image.path, f'第{img.page_number + 1}页{os.path.splitext(img.image.name)[1]}')
+    return response
+
+
+@login_required
+def update_practice_status(request, pk):
+    sheet = get_object_or_404(GuitarSheet, pk=pk)
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        notes = request.POST.get('notes', '')
+        valid_statuses = dict(PracticeProgress.PRACTICE_STATUS)
+        if status not in valid_statuses:
+            messages.error(request, '无效的练习状态')
+            return redirect('sheet_detail', pk=pk)
+        progress, created = PracticeProgress.objects.get_or_create(user=request.user, sheet=sheet)
+        progress.status = status
+        progress.notes = notes
+        progress.save()
+        messages.success(request, '练习进度已更新')
+    return redirect('sheet_detail', pk=pk)
+
+
 def shared_sheet(request, token):
     sheet = get_object_or_404(GuitarSheet.objects.select_related('category', 'owner'), share_token=token)
     if not sheet.is_shared and (not sheet.category or not sheet.category.is_shared):
@@ -466,12 +553,17 @@ def shared_category(request, token):
     if search_query:
         sheets = sheets.filter(title__icontains=search_query)
 
+    paginator = Paginator(sheets, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     is_member = category.members.filter(id=request.user.id).exists()
     is_owner = category.owner == request.user
 
     context = {
         'category': category,
-        'sheets': sheets,
+        'page_obj': page_obj,
+        'sheets': page_obj,
         'search_query': search_query,
         'is_member': is_member,
         'is_owner': is_owner,

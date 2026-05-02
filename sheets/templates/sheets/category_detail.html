@@ -203,11 +203,21 @@
     </div>
 
     {% if sheets %}
-    <div class="batch-actions" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-        <button type="button" class="btn btn-sm btn-outline" id="selectAllPageBtn">全选本页</button>
-        <button type="button" class="btn btn-sm btn-outline" id="selectAllPagesBtn">选择全部 {{ page_obj.paginator.count }} 首</button>
-        <span style="color: #718096; font-size: 0.85rem;">已选 <strong id="selectedCount">0</strong> 首</span>
-        <form method="post" style="display: inline;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div class="batch-actions" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-sm btn-outline" id="selectAllPageBtn">全选本页</button>
+            <button type="button" class="btn btn-sm btn-outline" id="selectAllPagesBtn">选择全部 {{ page_obj.paginator.count }} 首</button>
+            <span style="color: #718096; font-size: 0.85rem;">已选 <strong id="selectedCount">0</strong> 首</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span style="color: #718096; font-size: 0.85rem;">排序：</span>
+            <a href="?sort=-created_at{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm {% if not sort_by or sort_by == '-created_at' %}btn-primary{% else %}btn-outline{% endif %}">最新</a>
+            <a href="?sort=created_at{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm {% if sort_by == 'created_at' %}btn-primary{% else %}btn-outline{% endif %}">最早</a>
+            <a href="?sort=name{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm {% if sort_by == 'name' %}btn-primary{% else %}btn-outline{% endif %}">名称A-Z</a>
+            <a href="?sort=-name{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm {% if sort_by == '-name' %}btn-primary{% else %}btn-outline{% endif %}">名称Z-A</a>
+        </div>
+    </div>
+    <form method="post" style="display: inline;">
             {% csrf_token %}
             <input type="hidden" name="mode" id="batchMode" value="selected">
             <select name="category_id" id="batchCategory" style="display: none; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.85rem;">

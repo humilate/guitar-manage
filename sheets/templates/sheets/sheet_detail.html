@@ -160,6 +160,7 @@
         {% endif %}
         <div class="sheet-detail-actions">
             <a href="{% url 'edit_sheet' sheet.id %}" class="btn btn-primary">编辑</a>
+            <a href="{% url 'export_sheet' sheet.id %}" class="btn btn-outline">导出ZIP</a>
         </div>
     </div>
 
@@ -192,6 +193,28 @@
         <p>创建时间：{{ sheet.created_at|date:"Y-m-d H:i" }}</p>
         <p>更新时间：{{ sheet.updated_at|date:"Y-m-d H:i" }}</p>
         <p>图片数量：{{ images|length }} 张</p>
+    </div>
+
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+        <h3 style="margin-bottom: 1rem;">练习进度</h3>
+        <form method="post" action="{% url 'update_practice_status' sheet.id %}">
+            {% csrf_token %}
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                {% with progress=sheet.practice_progress.filter(user=request.user).first %}
+                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #e2e8f0; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if not progress or progress.status == 'not_started' %}background: #f7fafc; border-color: #cbd5e0;{% elif progress.status == 'practicing' %}background: #ebf8ff; border-color: #4299e1; color: #2b6cb0;{% elif progress.status == 'mastered' %}background: #f0fff4; border-color: #48bb78; color: #276749;{% endif %}">
+                    <input type="radio" name="status" value="not_started" {% if not progress or progress.status == 'not_started' %}checked{% endif %} style="margin:0;"> 未开始
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #e2e8f0; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if progress and progress.status == 'practicing' %}background: #ebf8ff; border-color: #4299e1; color: #2b6cb0;{% endif %}">
+                    <input type="radio" name="status" value="practicing" {% if progress and progress.status == 'practicing' %}checked{% endif %} style="margin:0;"> 🎸 练习中
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #e2e8f0; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if progress and progress.status == 'mastered' %}background: #f0fff4; border-color: #48bb78; color: #276749;{% endif %}">
+                    <input type="radio" name="status" value="mastered" {% if progress and progress.status == 'mastered' %}checked{% endif %} style="margin:0;"> ✅ 已掌握
+                </label>
+                {% endwith %}
+            </div>
+            <textarea name="notes" rows="2" placeholder="添加练习备注（可选）..." style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; resize: vertical; margin-bottom: 0.75rem;">{% with progress=sheet.practice_progress.filter(user=request.user).first %}{{ progress.notes }}{% endwith %}</textarea>
+            <button type="submit" class="btn btn-primary btn-sm">保存进度</button>
+        </form>
     </div>
 </div>
 
