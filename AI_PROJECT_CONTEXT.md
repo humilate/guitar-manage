@@ -4,6 +4,9 @@
 
 这是一个基于 Django 的吉他曲谱管理网站，部署在 PythonAnywhere 上。支持曲谱上传、分类管理、搜索筛选、曲谱共享、分类共享、成员协作、高清图片查看和拼音目录功能。
 
+**GitHub 仓库**：https://github.com/humilate/guitar-manage
+**在线演示**：https://humilate.pythonanywhere.com/
+
 ## 核心文件位置
 
 ### 关键文件路径
@@ -103,6 +106,35 @@ def user_can_access_category(user, category):
 - 滚轮缩放监听 `wheel` 事件
 - 拖动平移监听 `mousedown/mousemove/mouseup`
 - 键盘快捷键：ESC关闭，←→翻页，+/-缩放，0重置
+- 缩放范围：0.25x - 5x
+
+### Toast 通知系统（base.html）
+- 消息容器：`#toastContainer`
+- 类型：`toast-success`（绿）、`toast-error`（红）、`toast-info`（蓝）、`toast-warning`（黄）
+- 动画：右侧滑入，3.5秒后自动滑出消失
+- 图标：✅ ❌ ⚠️ ️
+
+### 骨架屏加载（style.css）
+- 组件：`.skeleton-card`、`.skeleton-thumbnail`、`.skeleton-title`、`.skeleton-badge`
+- 动画：`@keyframes skeleton-shimmer` 闪烁效果
+- 脉冲：`@keyframes skeleton-pulse` 呼吸效果
+
+### 拖拽排序（dashboard.html）
+- 初始化：`initDragSort(containerSelector)`
+- 触发：点击 `.drag-handle`（⠿图标）
+- 状态类：`.dragging`（拖拽中，半透明缩小）
+- 支持：曲谱卡片和分类列表拖拽排序
+
+### 上传进度动画（upload_folder.html）
+- 拖拽区域：`.drop-zone` 支持点击和拖拽上传
+- 加载遮罩：`.upload-loading-overlay` 全屏白色半透明
+- 进度条：`.loading-progress-fill` 渐变动画
+- 状态文字：正在上传 → 正在处理文件 → 正在保存到数据库
+
+### 卡片悬停效果（dashboard.html, category_detail.html, shared_category.html）
+- 悬停遮罩：`.hover-overlay` 黑色半透明背景
+- 显示内容：曲谱名称、页数、"点击查看"提示
+- 触发方式：鼠标悬停 `.sheet-card-thumb-wrap`
 
 ### 目录面板（category_detail.html）
 - 点击标题触发 `toggleCatalog()`
@@ -114,6 +146,11 @@ def user_can_access_category(user, category):
 - `selectAllPageBtn` 选择当前页
 - `selectAllPagesBtn` 选择全部曲谱
 - 动态显示/隐藏批量操作按钮
+
+### 页面加载动画（base.html）
+- 容器：`.page-loading` 全屏加载遮罩
+- Spinner：`.loading-spinner` 旋转动画
+- 状态：`.active` 类控制显示/隐藏
 
 ## 数据库模型关系
 ```
@@ -144,3 +181,14 @@ SheetImage
 - 需要清晰的 PowerShell 和 Bash 命令分别提供
 - 虚拟环境名称为 `myenv`
 - 项目目录为 `guitar-manage`
+
+## 项目版本历史
+
+| 版本 | 日期 | 主要更新 |
+|------|------|----------|
+| v1.10.x | 2026 | 骨架屏加载、上传进度动画、拖拽排序、Toast 通知、移动端布局优化 |
+| v1.9.x | 2026 | 卡片悬停遮罩、操作按钮样式精简 |
+| v1.8.x | 2026 | 共享曲谱查看器、共享分类页面、返回按钮、修复排序问题 |
+| v1.7.x | 2026 | 图片压缩、导出 ZIP、练习进度追踪 |
+| v1.6.x | 2026 | 分页功能、曲谱排序、成员权限管理 |
+| v1.5.x | 2026 | 拼音目录、分类共享、批量操作 |
