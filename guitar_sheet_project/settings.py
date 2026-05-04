@@ -10,22 +10,53 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def _allowed_hosts() -> list[str]:
+    raw = os.environ.get('DJANGO_ALLOWED_HOSTS')
+    if raw is None:
+        return ['127.0.0.1', 'localhost']
+    hosts = [h.strip() for h in raw.split(',') if h.strip()]
+    return hosts if hosts else ['127.0.0.1', 'localhost']
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-z4gyc&zwx)8v_f3l+pe-e6q3034=n1z%i$zkxy!3t7!lz4(@bn'
+# 生产环境必须在服务器上设置 DJANGO_SECRET_KEY（勿提交到 Git）。
+# 本地未设置时使用下方默认值，仅用于开发；若仓库曾公开过旧密钥，请在生产轮换新密钥。
+_DEFAULT_DEV_SECRET_KEY = (
+    'django-insecure-local-dev-only-rotate-in-production-9k2m#n$p5q@w7x%z'
+)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', _DEFAULT_DEV_SECRET_KEY)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# 生产设置 DJANGO_DEBUG=0 或 false；未设置时默认为 True（本地开发）
+DEBUG = _env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = ['humilate.pythonanywhere.com', '127.0.0.1', 'localhost']
+# 生产必须设置 DJANGO_ALLOWED_HOSTS=你的用户名.pythonanywhere.com（逗号分隔多个）
+# 未设置环境变量时默认为本机，便于本地开发
+ALLOWED_HOSTS = _allowed_hosts()
+
+# HTTPS 站点（如 PythonAnywhere）在 DEBUG=False 时建议设置，例如：
+# DJANGO_CSRF_TRUSTED_ORIGINS=https://你的用户名.pythonanywhere.com
+_csrf_raw = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS')
+CSRF_TRUSTED_ORIGINS = (
+    [o.strip() for o in _csrf_raw.split(',') if o.strip()]
+    if _csrf_raw
+    else []
+)
 
 
 # Application definition
