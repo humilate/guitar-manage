@@ -34,8 +34,8 @@
             padding: 0.5rem;
             text-align: center;
             font-size: 0.85rem;
-            color: #4a5568;
-            background: #f7fafc;
+            color: #5A4F43;
+            background: #FAF7F2;
         }
         .viewer-overlay {
             display: none;
@@ -164,7 +164,7 @@
             align-items: center;
             gap: 0.3rem;
             padding: 0.5rem 1rem;
-            background: #48bb78;
+            background: #5E7A52;
             color: #fff;
             border: none;
             border-radius: 5px;
@@ -173,7 +173,7 @@
             text-decoration: none;
         }
         .viewer-download:hover {
-            background: #38a169;
+            background: #4A6341;
         }
     </style>
 </head>
@@ -213,11 +213,11 @@
     <main class="container shared-container">
         <h1>{{ sheet.title }}</h1>
         {% if sheet.category %}
-        <p class="sheet-category" style="color: #718096; margin-bottom: 1.5rem;">分类：{{ sheet.category.name }}</p>
+        <p class="sheet-category" style="color: #7A6E62; margin-bottom: 1.5rem;">分类：{{ sheet.category.name }}</p>
         {% endif %}
 
         {% if images %}
-        <p style="color: #718096; margin-bottom: 0.5rem;">共 {{ images|length }} 页，点击缩略图放大查看</p>
+        <p style="color: #7A6E62; margin-bottom: 0.5rem;">共 {{ images|length }} 页，点击缩略图放大查看</p>
         <div class="thumbnail-grid">
             {% for img in images %}
             <div class="thumbnail-item" onclick="openViewer({{ forloop.counter0 }})">
@@ -227,10 +227,10 @@
             {% endfor %}
         </div>
         {% else %}
-        <p style="text-align: center; color: #718096;">该曲谱暂无图片</p>
+        <p style="text-align: center; color: #7A6E62;">该曲谱暂无图片</p>
         {% endif %}
 
-        <p class="shared-footer" style="margin-top: 2rem; color: #718096;">此曲谱由 <strong>{{ sheet.owner.username }}</strong> 分享</p>
+        <p class="shared-footer" style="margin-top: 2rem; color: #7A6E62;">此曲谱由 <strong>{{ sheet.owner.username }}</strong> 分享</p>
     </main>
 
     <div class="viewer-overlay" id="viewerOverlay">

@@ -138,7 +138,7 @@
         align-items: center;
         gap: 0.3rem;
         padding: 0.5rem 1rem;
-        background: #48bb78;
+        background: #5E7A52;
         color: #fff;
         border: none;
         border-radius: 5px;
@@ -147,7 +147,7 @@
         text-decoration: none;
     }
     .viewer-download:hover {
-        background: #38a169;
+        background: #4A6341;
     }
     .sheet-detail-header {
         display: flex;
@@ -206,17 +206,17 @@
             <div class="sheet-image-item">
                 <img src="{{ img.image.url }}" alt="{{ sheet.title }} - 第{{ forloop.counter }}页" class="sheet-full-image" onclick="openViewer({{ forloop.counter0 }})" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.querySelector('.img-fallback').style.display='flex';">
                 <div class="image-actions">
-                    <span class="page-label">第 {{ forloop.counter }} 页 <span style="font-size:0.75rem; color:#a0aec0;">(点击放大)</span></span>
+                    <span class="page-label">第 {{ forloop.counter }} 页 <span style="font-size:0.75rem; color:#B8AFA3;">(点击放大)</span></span>
                     <a href="{% url 'delete_image' img.id %}" class="btn btn-sm btn-danger" onclick="return confirm('确定删除这张图片吗？')">删除</a>
                 </div>
-                <div class="img-fallback" style="display:none; width:100%; height:200px; background:#f7fafc; border-radius:5px; align-items:center; justify-content:center; color:#a0aec0; font-size:0.9rem;">
+                <div class="img-fallback" style="display:none; width:100%; height:200px; background:#FAF7F2; border-radius:5px; align-items:center; justify-content:center; color:#B8AFA3; font-size:0.9rem;">
                     <span>图片加载失败</span>
                 </div>
             </div>
             {% endfor %}
         </div>
     {% else %}
-    <p style="text-align: center; color: #718096;">该曲谱暂无图片</p>
+    <p style="text-align: center; color: #7A6E62;">该曲谱暂无图片</p>
     {% endif %}
 
     <div class="sheet-meta">
@@ -225,22 +225,22 @@
         <p>图片数量：{{ images|length }} 张</p>
     </div>
 
-    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #DDD5C8;">
         <h3 style="margin-bottom: 1rem;">练习进度</h3>
         <form method="post" action="{% url 'update_practice_status' sheet.id %}">
             {% csrf_token %}
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #e2e8f0; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if not progress or progress.status == 'not_started' %}background: #f7fafc; border-color: #cbd5e0;{% elif progress.status == 'practicing' %}background: #ebf8ff; border-color: #4299e1; color: #2b6cb0;{% elif progress.status == 'mastered' %}background: #f0fff4; border-color: #48bb78; color: #276749;{% endif %}">
+                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #DDD5C8; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if not progress or progress.status == 'not_started' %}background: #FAF7F2; border-color: #DDD5C8;{% elif progress.status == 'practicing' %}background: #F0EBE0; border-color: #8B7355; color: #5A4F43;{% elif progress.status == 'mastered' %}background: #EDF2E8; border-color: #5E7A52; color: #2D3B27;{% endif %}">
                     <input type="radio" name="status" value="not_started" {% if not progress or progress.status == 'not_started' %}checked{% endif %} style="margin:0;"> 未开始
                 </label>
-                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #e2e8f0; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if progress and progress.status == 'practicing' %}background: #ebf8ff; border-color: #4299e1; color: #2b6cb0;{% endif %}">
+                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #DDD5C8; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if progress and progress.status == 'practicing' %}background: #F0EBE0; border-color: #8B7355; color: #5A4F43;{% endif %}">
                     <input type="radio" name="status" value="practicing" {% if progress and progress.status == 'practicing' %}checked{% endif %} style="margin:0;"> 🎸 练习中
                 </label>
-                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #e2e8f0; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if progress and progress.status == 'mastered' %}background: #f0fff4; border-color: #48bb78; color: #276749;{% endif %}">
+                <label style="display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; border: 2px solid #DDD5C8; border-radius: 20px; cursor: pointer; transition: all 0.2s; {% if progress and progress.status == 'mastered' %}background: #EDF2E8; border-color: #5E7A52; color: #2D3B27;{% endif %}">
                     <input type="radio" name="status" value="mastered" {% if progress and progress.status == 'mastered' %}checked{% endif %} style="margin:0;"> ✅ 已掌握
                 </label>
             </div>
-            <textarea name="notes" rows="2" placeholder="添加练习备注（可选）..." style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; resize: vertical; margin-bottom: 0.75rem;">{% if progress %}{{ progress.notes }}{% endif %}</textarea>
+            <textarea name="notes" rows="2" placeholder="添加练习备注（可选）..." style="width: 100%; padding: 0.75rem; border: 1px solid #DDD5C8; border-radius: 8px; font-size: 0.9rem; resize: vertical; margin-bottom: 0.75rem;">{% if progress %}{{ progress.notes }}{% endif %}</textarea>
             <button type="submit" class="btn btn-primary btn-sm">保存进度</button>
         </form>
     </div>

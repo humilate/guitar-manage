@@ -36,13 +36,13 @@
     <main class="container shared-container">
         <h1>{{ category.name }}</h1>
         {% if category.description %}
-        <p style="color: #718096; margin-bottom: 1rem;">{{ category.description }}</p>
+        <p style="color: #7A6E62; margin-bottom: 1rem;">{{ category.description }}</p>
         {% endif %}
-        <p style="color: #718096; margin-bottom: 2rem;">共 {{ page_obj.paginator.count }} 首曲谱，由 <strong>{{ category.owner.username }}</strong> 分享</p>
+        <p style="color: #7A6E62; margin-bottom: 2rem;">共 {{ page_obj.paginator.count }} 首曲谱，由 <strong>{{ category.owner.username }}</strong> 分享</p>
 
         {% if is_member %}
-        <div class="alert" style="background: #ebf8ff; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid #4299e1;">
-            <p style="color: #2c5282; margin: 0;">您是该分类的成员，可以<a href="{% url 'category_detail' category.id %}" style="color: #2b6cb0; text-decoration: underline;">点击此处</a>进入分类管理页面。</p>
+        <div class="alert" style="background: #F0EBE0; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid #8B7355;">
+            <p style="color: #4A4239; margin: 0;">您是该分类的成员，可以<a href="{% url 'category_detail' category.id %}" style="color: #5A4F43; text-decoration: underline;">点击此处</a>进入分类管理页面。</p>
         </div>
         {% endif %}
 
@@ -97,7 +97,7 @@
             <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">首页</a>
             <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">上一页</a>
             {% endif %}
-            <span style="color: #718096; font-size: 0.875rem;">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页</span>
+            <span style="color: #7A6E62; font-size: 0.875rem;">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页</span>
             {% if page_obj.has_next %}
             <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">下一页</a>
             <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline">末页</a>
@@ -105,7 +105,7 @@
         </div>
         {% endif %}
         {% else %}
-        <p style="text-align: center; color: #718096;">
+        <p style="text-align: center; color: #7A6E62;">
             {% if search_query %}未找到匹配的曲谱{% else %}该分类下暂无曲谱{% endif %}
         </p>
         {% endif %}

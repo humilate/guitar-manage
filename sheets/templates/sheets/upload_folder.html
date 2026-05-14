@@ -6,9 +6,9 @@
 <div class="form-container">
     <h2>{{ title }}</h2>
     <div class="form-card">
-        <div style="background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 5px; padding: 1rem; margin-bottom: 1.5rem;">
-            <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: #2c5282;">使用说明</h3>
-            <ol style="font-size: 0.9rem; color: #2c5282; padding-left: 1.5rem; line-height: 1.8;">
+        <div style="background: #F0EBE0; border: 1px solid #B8CDB0; border-radius: 5px; padding: 1rem; margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: #4A4239;">使用说明</h3>
+            <ol style="font-size: 0.9rem; color: #4A4239; padding-left: 1.5rem; line-height: 1.8;">
                 <li>将要上传的文件夹<strong>压缩成 ZIP 文件</strong></li>
                 <li>文件夹结构应为：<strong>分类名/曲谱名/图片.png</strong></li>
                 <li>例如：<code>流行歌曲/晴天/1.jpg</code></li>
@@ -22,10 +22,10 @@
                 <label for="id_zip_file">ZIP 压缩包</label>
                 <div class="drop-zone" id="dropZone">
                     <div class="drop-zone-icon">📁</div>
-                    <p style="margin: 0; color: #4a5568; font-size: 0.95rem;">点击选择文件 或 拖拽 ZIP 文件到此处</p>
+                    <p style="margin: 0; color: #5A4F43; font-size: 0.95rem;">点击选择文件 或 拖拽 ZIP 文件到此处</p>
                     <input type="file" name="zip_file" id="id_zip_file" accept=".zip" style="display: none;">
                 </div>
-                <div id="fileName" style="margin-top: 0.5rem; font-size: 0.85rem; color: #667eea; display: none;"></div>
+                <div id="fileName" style="margin-top: 0.5rem; font-size: 0.85rem; color: #6B5740; display: none;"></div>
             </div>
 
             <div class="form-actions">
@@ -68,8 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var size = (file.size / 1024 / 1024).toFixed(2);
             fileName.textContent = '已选择: ' + name + ' (' + size + ' MB)';
             fileName.style.display = '';
-            dropZone.style.borderColor = '#48bb78';
-            dropZone.style.background = '#f0fff4';
+            dropZone.style.borderColor = '#5E7A52';
+            dropZone.style.background = '#EDF2E8';
         }
     });
 
@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var size = (file.size / 1024 / 1024).toFixed(2);
             fileName.textContent = '已选择: ' + file.name + ' (' + size + ' MB)';
             fileName.style.display = '';
-            dropZone.style.borderColor = '#48bb78';
-            dropZone.style.background = '#f0fff4';
+            dropZone.style.borderColor = '#5E7A52';
+            dropZone.style.background = '#EDF2E8';
         }
     });
 
