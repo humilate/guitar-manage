@@ -16,6 +16,7 @@ from django.db import transaction
 from django.db.models import Q
 from .models import GuitarSheet, Category, SheetImage, PracticeProgress
 from .forms import UserRegisterForm, GuitarSheetForm, CategoryForm, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE
+from .ratelimit import login_rate_limit
 from pypinyin import lazy_pinyin, Style
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,7 @@ def register_view(request):
     return render(request, 'sheets/register.html', {'form': form})
 
 
+@login_rate_limit(max_attempts=5, window_seconds=300, block_seconds=900)
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')

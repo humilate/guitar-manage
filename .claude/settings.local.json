@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(python manage.py check --deploy)",
+      "Bash(python -c \"from sheets.ratelimit import login_rate_limit; from sheets.views import login_view; print\\('OK: imports work'\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=guitar_sheet_project.settings python -c \"import django; django.setup\\(\\); from sheets.ratelimit import login_rate_limit; from sheets.views import login_view; print\\('OK: imports work'\\)\")"
+    ]
+  }
+}

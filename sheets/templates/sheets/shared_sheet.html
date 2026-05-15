@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ sheet.title }} - 共享曲谱</title>
-    <link rel="stylesheet" href="/static/sheets/css/style.css">
+    <link rel="stylesheet" href="{% static 'sheets/css/style.css' %}">
     <style>
         .thumbnail-grid {
             display: grid;

@@ -6,6 +6,11 @@
 <div class="auth-container">
     <div class="auth-card">
         <h2>登录</h2>
+        {% if rate_limit_error %}
+        <div class="alert alert-error" style="padding: 10px 15px; margin-bottom: 1rem; border-radius: 5px; background: #F5E6E4; color: #5C3230; border: 1px solid #D4A9A5;">
+            {{ rate_limit_error }}
+        </div>
+        {% endif %}
         <form method="post" class="auth-form">
             {% csrf_token %}
             <div class="form-group">

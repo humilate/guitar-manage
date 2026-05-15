@@ -17,11 +17,23 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+_BOOL_TRUTHY = frozenset({'1', 'true', 'yes', 'on'})
+_BOOL_FALSY = frozenset({'0', 'false', 'no', 'off'})
+
+
 def _env_bool(name: str, default: bool) -> bool:
     raw = os.environ.get(name)
     if raw is None:
         return default
-    return raw.strip().lower() in ('1', 'true', 'yes', 'on')
+    val = raw.strip().lower()
+    if val in _BOOL_TRUTHY:
+        return True
+    if val in _BOOL_FALSY:
+        return False
+    raise ValueError(
+        f'Environment variable {name}={raw!r} is not a valid boolean '
+        f'(expected one of: {sorted(_BOOL_TRUTHY | _BOOL_FALSY)}).'
+    )
 
 
 def _allowed_hosts() -> list[str]:
@@ -35,15 +47,22 @@ def _allowed_hosts() -> list[str]:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# 生产环境必须在服务器上设置 DJANGO_SECRET_KEY（勿提交到 Git）。
-# 本地未设置时使用下方默认值，仅用于开发；若仓库曾公开过旧密钥，请在生产轮换新密钥。
-_DEFAULT_DEV_SECRET_KEY = (
-    'django-insecure-local-dev-only-rotate-in-production-9k2m#n$p5q@w7x%z'
-)
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', _DEFAULT_DEV_SECRET_KEY)
-
 # 生产设置 DJANGO_DEBUG=0 或 false；未设置时默认为 True（本地开发）
 DEBUG = _env_bool('DJANGO_DEBUG', True)
+
+# DJANGO_SECRET_KEY：生产环境必须通过环境变量设置（勿提交到 Git）。
+# 本地 DEBUG 模式未设置时自动生成临时密钥，方便开发启动。
+_RAW_SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if _RAW_SECRET_KEY:
+    SECRET_KEY = _RAW_SECRET_KEY
+elif DEBUG:
+    from django.core.management.utils import get_random_secret_key
+    SECRET_KEY = get_random_secret_key()
+else:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured(
+        'DJANGO_SECRET_KEY environment variable is required when DEBUG=False.'
+    )
 
 # 生产必须设置 DJANGO_ALLOWED_HOSTS=你的用户名.pythonanywhere.com（逗号分隔多个）
 # 未设置环境变量时默认为本机，便于本地开发
@@ -158,5 +177,24 @@ MEDIA_ROOT = BASE_DIR / 'media'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-guitar-sheets',
+    }
+}
+
+# Security headers
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
